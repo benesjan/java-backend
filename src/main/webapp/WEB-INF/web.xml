@@ -4,11 +4,19 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5">
     <servlet>
-        <servlet-name>hello</servlet-name>
-        <servlet-class>cz.docta.HelloServlet</servlet-class>
+        <servlet-name>generator</servlet-name>
+        <servlet-class>cz.docta.bookingtimes.GeneratorServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>generatorinfo</servlet-name>
+        <servlet-class>cz.docta.bookingtimes.GeneratorInfoServlet</servlet-class>
     </servlet>
     <servlet-mapping>
-        <servlet-name>hello</servlet-name>
-        <url-pattern>/</url-pattern>
+        <servlet-name>generator</servlet-name>
+        <url-pattern>/times/generate</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>generatorinfo</servlet-name>
+        <url-pattern>/times/change</url-pattern>
     </servlet-mapping>
 </web-app>

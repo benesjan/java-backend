@@ -5,13 +5,16 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.*;
 import org.joda.time.DateTime;
+import org.joda.time.LocalTime;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GeneratorServlet extends HttpServlet {
@@ -61,14 +64,36 @@ public class GeneratorServlet extends HttpServlet {
         Map<Integer, Boolean> officeHours = new HashMap<>();
 
         DateTime currentDate = firstDate;
-        System.out.println(firstDate.getDayOfWeek());
-        for (int i = 0; i<numberOfDays; i++) {
-//            if (office.child(""))
-//            this.generateHours(officeHours, visitLength, of);
+        DataSnapshot dayHours;
+        for (int i = 0; i < numberOfDays; i++) {
+            dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
+            if (dayHours.child("available").getValue(Boolean.class)) {
+                this.generateHours(officeHours, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate);
+            }
             currentDate = currentDate.plusDays(1);
         }
+
     }
 
-    private void generateHours(Map<Integer, Boolean> dayHours, Integer visitLength, String officeHours, DateTime date) {
+    private void generateHours(Map<Integer, Boolean> dayHours, Integer visitLength, List<Interval> intervals, DateTime date) {
+        System.out.println(intervals.get(0).start);
+        System.out.println(intervals.get(1).start);
+    }
+
+    private List<Interval> getIntervals(String officeHours) {
+        ArrayList<Interval> intervals = new ArrayList<>();
+        String[] timeVals;
+        String[] start;
+        String[] end;
+
+        for (String interval : officeHours.split(",")) {
+            timeVals = interval.split("-");
+            start = timeVals[0].split(":");
+            end = timeVals[1].split(":");
+            intervals.add(new Interval(new LocalTime(Integer.parseInt(start[0]), Integer.parseInt(start[1])),
+                    new LocalTime(Integer.parseInt(end[0]), Integer.parseInt(end[1]))));
+        }
+
+        return intervals;
     }
 }

@@ -76,22 +76,14 @@ public class GeneratorServlet extends HttpServlet {
     }
 
     private void generateHours(Map<Integer, Boolean> dayHours, Integer visitLength, List<Interval> intervals, DateTime date) {
-        System.out.println(intervals.get(0).start);
-        System.out.println(intervals.get(1).start);
+        System.out.println(intervals.get(0));
     }
 
     private List<Interval> getIntervals(String officeHours) {
         ArrayList<Interval> intervals = new ArrayList<>();
-        String[] timeVals;
-        String[] start;
-        String[] end;
 
         for (String interval : officeHours.split(",")) {
-            timeVals = interval.split("-");
-            start = timeVals[0].split(":");
-            end = timeVals[1].split(":");
-            intervals.add(new Interval(new LocalTime(Integer.parseInt(start[0]), Integer.parseInt(start[1])),
-                    new LocalTime(Integer.parseInt(end[0]), Integer.parseInt(end[1]))));
+            intervals.add(new Interval(interval));
         }
 
         return intervals;

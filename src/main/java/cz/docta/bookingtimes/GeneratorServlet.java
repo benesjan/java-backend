@@ -12,10 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GeneratorServlet extends HttpServlet {
 
@@ -55,27 +52,57 @@ public class GeneratorServlet extends HttpServlet {
     }
 
     private void generateAndSaveHours(DataSnapshot office) {
+//        TODO: generate last date, fix data overwriting, create logger
         String officeId = office.getKey();
         Integer visitLength = office.child("visitLength").getValue(Integer.class);
         Integer numberOfDays = office.child("numberOfDays").getValue(Integer.class);
-        DateTime firstDate = new DateTime(); // Set to today for development purposes
 
-        DatabaseReference ref = this.database.getReference("/appointmentsPublic/" + officeId);
-        Map<Integer, Boolean> officeHours = new HashMap<>();
+        DatabaseReference ref = this.database.getReference("/");
+        Map<String, Boolean> officeHours = new HashMap<>();
+        Map updatedOfficeData = new HashMap();
 
-        DateTime currentDate = firstDate;
+        DateTime currentDate;
+        if (office.hasChild("lastGeneratedDate")) {
+            currentDate = new DateTime(
+                    office.child("lastGeneratedDate/year").getValue(Integer.class),
+                    office.child("lastGeneratedDate/month").getValue(Integer.class),
+                    office.child("lastGeneratedDate/date").getValue(Integer.class),
+                    0,
+                    0
+            );
+        } else {
+            currentDate = new DateTime(); // If the lastGeneratedDate is not available set to tomorrow
+        }
+
+        DateTime lastDate = new DateTime().plusDays(numberOfDays);
         DataSnapshot dayHours;
-        for (int i = 0; i < numberOfDays; i++) {
+        while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) == -1) {
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
                 this.generateHours(officeHours, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate);
             }
-            currentDate = currentDate.plusDays(1);
         }
+
+        Map<String, Integer> lastGeneratedDate = new HashMap<>();
+
+        lastGeneratedDate.put("year", currentDate.getYear());
+        lastGeneratedDate.put("month", currentDate.getMonthOfYear());
+        lastGeneratedDate.put("date", currentDate.getDayOfMonth());
+
+        updatedOfficeData.put("/appointmentsPublic/" + officeId, officeHours);
+        updatedOfficeData.put("/generatorInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);
+
+        ref.updateChildren(updatedOfficeData, (databaseError, databaseReference) -> {
+            if (databaseError != null) {
+                System.out.println("Data could not be saved " + databaseError.getMessage());
+            } else {
+                System.out.println("Data saved successfully.");
+            }
+        });
 
     }
 
-    private void generateHours(Map<Integer, Boolean> dayHours, Integer visitLength, List<Interval> intervals, DateTime date) {
+    private void generateHours(Map<String, Boolean> officeHours, Integer visitLength, List<Interval> intervals, DateTime date) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -86,10 +113,11 @@ public class GeneratorServlet extends HttpServlet {
             LocalTime nextTime;
 
             while ((nextTime = currentTime.plusMinutes(visitLength)).compareTo(interval.end) != 1) {
-//                System.out.println(currentTime);
                 String bookTime = prefix + ((currentTime.getHourOfDay() < 10) ? "0" : "") + currentTime.getHourOfDay()
                         + ((currentTime.getMinuteOfHour() < 10) ? "0" : "") + currentTime.getMinuteOfHour();
-                System.out.println(bookTime);
+
+                officeHours.put(bookTime, true);
+
                 currentTime = nextTime;
             }
         }

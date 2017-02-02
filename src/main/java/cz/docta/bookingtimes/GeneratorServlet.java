@@ -76,9 +76,29 @@ public class GeneratorServlet extends HttpServlet {
     }
 
     private void generateHours(Map<Integer, Boolean> dayHours, Integer visitLength, List<Interval> intervals, DateTime date) {
-        System.out.println(intervals.get(0));
+        Integer dayDate = date.getDayOfMonth();
+        Integer month = date.getMonthOfYear();
+
+        String prefix = "" + date.getYear() + ((month < 10) ? "0" : "") + month + ((dayDate < 10) ? "0" : "") + dayDate;
+
+        for (Interval interval : intervals) {
+            LocalTime currentTime = interval.start;
+            LocalTime nextTime;
+
+            while ((nextTime = currentTime.plusMinutes(visitLength)).compareTo(interval.end) != 1) {
+//                System.out.println(currentTime);
+                String bookTime = prefix + ((currentTime.getHourOfDay() < 10) ? "0" : "") + currentTime.getHourOfDay()
+                        + ((currentTime.getMinuteOfHour() < 10) ? "0" : "") + currentTime.getMinuteOfHour();
+                System.out.println(bookTime);
+                currentTime = nextTime;
+            }
+        }
     }
 
+    /**
+     * @param officeHours (example: 7:30-12:30,13:30-15:30)
+     * @return List of Intervals. Each Interval consists of Start time (LocalTime object) and end time.
+     */
     private List<Interval> getIntervals(String officeHours) {
         ArrayList<Interval> intervals = new ArrayList<>();
 

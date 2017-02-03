@@ -7,6 +7,11 @@ handlers:
   script: ignored_field
   secure: always  # Require HTTPS
 
+# TODO: activate when deployed in production
+#- url: /cron/.*
+#  script: ignored_field
+#  login: admin
+
 runtime_config:  # Optional
   jdk: openjdk8
   server: jetty9

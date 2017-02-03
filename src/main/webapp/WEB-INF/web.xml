@@ -12,8 +12,9 @@
         <servlet-class>cz.docta.bookingtimes.GeneratorInfoServlet</servlet-class>
     </servlet>
     <servlet-mapping>
+        <!--Invoked by cron-->
         <servlet-name>generator</servlet-name>
-        <url-pattern>/times/generate</url-pattern>
+        <url-pattern>/cron/generate</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>generatorinfo</servlet-name>

@@ -1,0 +1,4 @@
+cron:
+- description: daily booking time generation
+  url: /cron/generate
+  schedule: every 24 hours

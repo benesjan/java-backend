@@ -80,15 +80,17 @@ public class GeneratorServlet extends HttpServlet {
 
         DateTime lastDate = new DateTime().plusDays(numberOfDays);
         DataSnapshot dayHours;
-        do {
-            currentDate = currentDate.plusDays(1);
+        while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) == -1) {
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
                 this.generateHours(updatedOfficeData, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId);
             }
-        } while (currentDate.compareTo(lastDate) == -1);
+        }
 
         Map<String, Integer> lastGeneratedDate = new HashMap<>();
+
+        // On this date the condition hasn't passed, so it has to be decremented in order to represent last generated date
+        currentDate = currentDate.minusDays(1);
 
         lastGeneratedDate.put("year", currentDate.getYear());
         lastGeneratedDate.put("month", currentDate.getMonthOfYear());
@@ -110,11 +112,12 @@ public class GeneratorServlet extends HttpServlet {
      * The following function generates booking times and saves them to updatedOfficeData map.
      *
      * @param updatedOfficeData Map, which gets saved using the multi location update
-     * @param visitLength length of a doctor visit
-     * @param intervals List of Interval objects, which take place that day
+     * @param visitLength       Length of a doctor visit
+     * @param intervals         List of Interval objects, which take place that day
      * @param date
      * @param officeId
      */
+
     private void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();

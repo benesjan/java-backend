@@ -46,13 +46,18 @@ public class GeneratorServlet extends HttpServlet {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                System.out.println("The read failed: " + databaseError.getCode());
+                System.err.println("The read failed: " + databaseError.getCode());
             }
         });
     }
 
+    /**
+     * This function generates booking time according to office Data and saves them to Firebase using reference,
+     * which is created using the global database object.
+     *
+     * @param office Raw snapshot of data received from Firebase
+     */
     private void generateAndSaveHours(DataSnapshot office) {
-//        TODO: create logger
         String officeId = office.getKey();
         Integer visitLength = office.child("visitLength").getValue(Integer.class);
         Integer numberOfDays = office.child("numberOfDays").getValue(Integer.class);
@@ -93,14 +98,23 @@ public class GeneratorServlet extends HttpServlet {
 
         ref.updateChildren(updatedOfficeData, (databaseError, databaseReference) -> {
             if (databaseError != null) {
-                System.out.println("Data could not be saved " + databaseError.getMessage());
+                System.err.println("OfficeId: " + officeId + ", Data could not be saved " + databaseError.getMessage());
             } else {
-                System.out.println("Data saved successfully.");
+                System.out.println("OfficeId: " + officeId + ", Data saved successfully.");
             }
         });
 
     }
 
+    /**
+     * The following function generates booking times and saves them to updatedOfficeData map.
+     *
+     * @param updatedOfficeData Map, which gets saved using the multi location update
+     * @param visitLength length of a doctor visit
+     * @param intervals List of Interval objects, which take place that day
+     * @param date
+     * @param officeId
+     */
     private void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();

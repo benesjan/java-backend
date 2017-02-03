@@ -52,13 +52,12 @@ public class GeneratorServlet extends HttpServlet {
     }
 
     private void generateAndSaveHours(DataSnapshot office) {
-//        TODO: generate last date, fix data overwriting, create logger
+//        TODO: create logger
         String officeId = office.getKey();
         Integer visitLength = office.child("visitLength").getValue(Integer.class);
         Integer numberOfDays = office.child("numberOfDays").getValue(Integer.class);
 
         DatabaseReference ref = this.database.getReference("/");
-        Map<String, Boolean> officeHours = new HashMap<>();
         Map updatedOfficeData = new HashMap();
 
         DateTime currentDate;
@@ -76,12 +75,13 @@ public class GeneratorServlet extends HttpServlet {
 
         DateTime lastDate = new DateTime().plusDays(numberOfDays);
         DataSnapshot dayHours;
-        while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) == -1) {
+        do {
+            currentDate = currentDate.plusDays(1);
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
-                this.generateHours(officeHours, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate);
+                this.generateHours(updatedOfficeData, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId);
             }
-        }
+        } while (currentDate.compareTo(lastDate) == -1);
 
         Map<String, Integer> lastGeneratedDate = new HashMap<>();
 
@@ -89,7 +89,6 @@ public class GeneratorServlet extends HttpServlet {
         lastGeneratedDate.put("month", currentDate.getMonthOfYear());
         lastGeneratedDate.put("date", currentDate.getDayOfMonth());
 
-        updatedOfficeData.put("/appointmentsPublic/" + officeId, officeHours);
         updatedOfficeData.put("/generatorInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);
 
         ref.updateChildren(updatedOfficeData, (databaseError, databaseReference) -> {
@@ -102,7 +101,7 @@ public class GeneratorServlet extends HttpServlet {
 
     }
 
-    private void generateHours(Map<String, Boolean> officeHours, Integer visitLength, List<Interval> intervals, DateTime date) {
+    private void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -116,7 +115,7 @@ public class GeneratorServlet extends HttpServlet {
                 String bookTime = prefix + ((currentTime.getHourOfDay() < 10) ? "0" : "") + currentTime.getHourOfDay()
                         + ((currentTime.getMinuteOfHour() < 10) ? "0" : "") + currentTime.getMinuteOfHour();
 
-                officeHours.put(bookTime, true);
+                updatedOfficeData.put("/appointmentsPublic/" + officeId + "/" + bookTime, true);
 
                 currentTime = nextTime;
             }

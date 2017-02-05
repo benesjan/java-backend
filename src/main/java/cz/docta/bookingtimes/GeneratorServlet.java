@@ -97,6 +97,7 @@ public class GeneratorServlet extends HttpServlet {
         lastGeneratedDate.put("date", currentDate.getDayOfMonth());
 
         updatedOfficeData.put("/generatorInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);
+        updatedOfficeData.put("/officeFullInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);
 
         ref.updateChildren(updatedOfficeData, (databaseError, databaseReference) -> {
             if (databaseError != null) {

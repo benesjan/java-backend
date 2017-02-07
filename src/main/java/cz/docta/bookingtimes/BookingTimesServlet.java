@@ -3,20 +3,22 @@ package cz.docta.bookingtimes;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.database.*;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class GeneratorServlet extends HttpServlet {
+abstract class BookingTimesServlet extends HttpServlet {
 
-    FirebaseDatabase database = null;
+    protected FirebaseDatabase database = null;
 
     @Override
     public void init(ServletConfig config) {
@@ -30,39 +32,18 @@ public class GeneratorServlet extends HttpServlet {
         this.database = FirebaseDatabase.getInstance(defaultApp);
     }
 
-    @Override
-    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.getWriter().println("OK");
-
-        DatabaseReference ref = this.database.getReference("generatorInfo");
-
-        ref.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot office : dataSnapshot.getChildren()) {
-                    generateAndSaveHours(office);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                System.err.println("The read failed: " + databaseError.getCode());
-            }
-        });
-    }
-
     /**
      * This function generates booking time according to office Data and saves them to Firebase using reference,
      * which is created using the global database object.
      *
      * @param office Raw snapshot of data received from Firebase
      */
-    private void generateAndSaveHours(DataSnapshot office) {
+    protected void generateAndSaveHours(DataSnapshot office, FirebaseDatabase database) {
         String officeId = office.getKey();
         Integer visitLength = office.child("visitLength").getValue(Integer.class);
         Integer numberOfDays = office.child("numberOfDays").getValue(Integer.class);
 
-        DatabaseReference ref = this.database.getReference("/");
+        DatabaseReference ref = database.getReference("/");
         Map updatedOfficeData = new HashMap();
 
         DateTime currentDate;

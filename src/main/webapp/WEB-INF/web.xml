@@ -4,20 +4,20 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5">
     <servlet>
-        <servlet-name>generator</servlet-name>
-        <servlet-class>cz.docta.bookingtimes.GeneratorServlet</servlet-class>
+        <servlet-name>crontimes</servlet-name>
+        <servlet-class>cz.docta.bookingtimes.CronTimesServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>generatorinfo</servlet-name>
-        <servlet-class>cz.docta.bookingtimes.GeneratorInfoServlet</servlet-class>
+        <servlet-name>registration</servlet-name>
+        <servlet-class>cz.docta.bookingtimes.RegistrationServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <!--Invoked by cron-->
-        <servlet-name>generator</servlet-name>
+        <servlet-name>crontimes</servlet-name>
         <url-pattern>/cron/generate</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>generatorinfo</servlet-name>
-        <url-pattern>/times/change</url-pattern>
+        <servlet-name>registration</servlet-name>
+        <url-pattern>/registration/generate</url-pattern>
     </servlet-mapping>
 </web-app>

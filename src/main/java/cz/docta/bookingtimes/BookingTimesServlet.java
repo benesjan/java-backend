@@ -18,18 +18,20 @@ import java.util.Map;
 
 abstract class BookingTimesServlet extends HttpServlet {
 
-    protected FirebaseDatabase database = null;
+    FirebaseDatabase database = null;
 
     @Override
     public void init(ServletConfig config) {
-        FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredential(FirebaseCredentials.applicationDefault())
-                .setDatabaseUrl("https://doctor-appointment-system.firebaseio.com/")
-                .build();
+        if (FirebaseApp.getApps().size() == 0) {
+            FirebaseOptions options = new FirebaseOptions.Builder()
+                    .setCredential(FirebaseCredentials.applicationDefault())
+                    .setDatabaseUrl("https://doctor-appointment-system.firebaseio.com/")
+                    .build();
 
-        FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
+            FirebaseApp.initializeApp(options);
+        }
 
-        this.database = FirebaseDatabase.getInstance(defaultApp);
+        this.database = FirebaseDatabase.getInstance();
     }
 
     /**
@@ -38,7 +40,7 @@ abstract class BookingTimesServlet extends HttpServlet {
      *
      * @param office Raw snapshot of data received from Firebase
      */
-    protected void generateAndSaveHours(DataSnapshot office, FirebaseDatabase database) {
+    void generateAndSaveHours(DataSnapshot office, FirebaseDatabase database) {
         String officeId = office.getKey();
         Integer visitLength = office.child("visitLength").getValue(Integer.class);
         Integer numberOfDays = office.child("numberOfDays").getValue(Integer.class);
@@ -96,8 +98,8 @@ abstract class BookingTimesServlet extends HttpServlet {
      * @param updatedOfficeData Map, which gets saved using the multi location update
      * @param visitLength       Length of a doctor visit
      * @param intervals         List of Interval objects, which take place that day
-     * @param date
-     * @param officeId
+     * @param date              Date at which the appointment times are generated
+     * @param officeId          Id of the office
      */
 
     private void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {

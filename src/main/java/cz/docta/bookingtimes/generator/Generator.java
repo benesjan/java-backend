@@ -4,7 +4,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
@@ -36,7 +35,7 @@ public class Generator {
         return FirebaseDatabase.getInstance(getAppAsUser(uid));
     }
 
-    public static FirebaseApp getAppAsUser(String uid) {
+    private static FirebaseApp getAppAsUser(String uid) {
         Map<String, Object> auth = new HashMap<>();
         String appName = "userApp" + uid;
         auth.put("uid", uid);
@@ -57,6 +56,34 @@ public class Generator {
         return FirebaseApp.getInstance(appName);
     }
 
+    public static void generateHoursInInterval(DataSnapshot generatorSnapshot, Map objectToSave, Long startAtTimestamp, Long endAtTimestamp, Boolean setNull) {
+        if (isGenerationRequired(generatorSnapshot, startAtTimestamp)) {
+            // TODO
+        }
+    }
+
+    /**
+     * @param generatorSnapshot Office generator snapshot
+     * @param startAtTimestamp  Timestamp of a start of the interval
+     * @return Boolean representing the comparison of the timestamp of the last generated date and the startAt timestamp.
+     */
+    private static Boolean isGenerationRequired(DataSnapshot generatorSnapshot, Long startAtTimestamp) {
+        if (generatorSnapshot.hasChild("lastGeneratedDate")) {
+            // Get the timestamp in milliseconds of the end (plus 1 day) of the last generated date
+            Long timestamp = new DateTime(
+                    generatorSnapshot.child("lastGeneratedDate/year").getValue(Integer.class),
+                    generatorSnapshot.child("lastGeneratedDate/month").getValue(Integer.class),
+                    generatorSnapshot.child("lastGeneratedDate/date").getValue(Integer.class),
+                    0,
+                    0
+            ).plusDays(1).getMillis();
+
+            if (startAtTimestamp < timestamp) return true;
+        }
+
+        return false;
+    }
+
     /**
      * This function generates booking time according to office Data and saves them to Firebase using reference,
      * which is created using the global database object.
@@ -68,7 +95,7 @@ public class Generator {
         Integer visitLength = office.child("visitLength").getValue(Integer.class);
         Integer numberOfDays = office.child("numberOfDays").getValue(Integer.class);
 
-        Map updatedOfficeData = new HashMap();
+        Map<String, Object> updatedOfficeData = new HashMap<>();
 
         DateTime currentDate;
         if (office.hasChild("lastGeneratedDate")) {
@@ -124,10 +151,10 @@ public class Generator {
      * @param intervals         List of Interval objects, which take place that day
      * @param date              Date at which the appointment times are generated
      * @param officeId          Id of the office
-     * @param delete            If set to true booking times in the interval will be deleted
+     * @param setNull           If set to true booking times in the interval will be deleted
      */
 
-    private static void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean delete) {
+    private static void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean setNull) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -141,7 +168,7 @@ public class Generator {
                 String bookTime = prefix + ((currentTime.getHourOfDay() < 10) ? "0" : "") + currentTime.getHourOfDay()
                         + ((currentTime.getMinuteOfHour() < 10) ? "0" : "") + currentTime.getMinuteOfHour();
 
-                updatedOfficeData.put("/appointmentsPublic/" + officeId + "/" + bookTime, (delete) ? null : true);
+                updatedOfficeData.put("/appointmentsPublic/" + officeId + "/" + bookTime, (setNull) ? null : true);
 
                 currentTime = nextTime;
             }

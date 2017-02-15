@@ -1,8 +1,7 @@
 package cz.docta.bookingtimes;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.*;
 import com.google.gson.Gson;
 import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
 import cz.docta.bookingtimes.generator.Generator;
@@ -49,25 +48,36 @@ public class AddHolidayServlet extends FirebaseServlet {
 
     private void verifyTokenAndAddHoliday(AddHolidayRequest addHolidayRequest) {
         FirebaseAuth.getInstance(Generator.getServiceApp()).verifyIdToken(addHolidayRequest.getIdToken())
-                .addOnSuccessListener(decodedToken -> {
-                    this.addHoliday(Generator.getUserDatabase(decodedToken.getUid()), addHolidayRequest);
-                }).addOnFailureListener(e -> System.err.println("Token verification failed. addHolidayRequest: " + addHolidayRequest));
+                .addOnSuccessListener(decodedToken -> this.addHoliday(Generator.getUserDatabase(decodedToken.getUid()), addHolidayRequest))
+                .addOnFailureListener(e -> System.err.println("Token verification failed. addHolidayRequest: " + addHolidayRequest));
     }
 
     private void addHoliday(FirebaseDatabase database, AddHolidayRequest addHolidayRequest) {
         // TODO: delete booking times if necessary
-        DatabaseReference rootRef = database.getReference("/");
-        String holidayId = rootRef.push().getKey();
-        Map objectToSave = new HashMap();
+        String holidayId = database.getReference("/").push().getKey();
+        String officeId = addHolidayRequest.getOfficeId();
+        Map<String, Object> objectToSave = new HashMap<>();
 
-        objectToSave.put("/generatorInfo/" + addHolidayRequest.getOfficeId() + "/holidays/" + holidayId, addHolidayRequest.getGeneratorMap());
-        objectToSave.put("/officeHolidays/" + addHolidayRequest.getOfficeId() + "/" + holidayId, addHolidayRequest.getOfficeHolidaysMap());
+        objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getGeneratorMap());
+        objectToSave.put("/officeHolidays/" + officeId + "/" + holidayId, addHolidayRequest.getOfficeHolidaysMap());
 
-        database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
-            if (databaseError != null) {
-                System.err.println("OfficeId: " + addHolidayRequest.getOfficeId() + ", Holiday saving failed " + databaseError.getMessage());
-            } else {
-                System.out.println("OfficeId: " + addHolidayRequest.getOfficeId() + ", Holiday saved successdully.");
+        database.getReference("generatorInfo/" + officeId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Generator.generateHoursInInterval(dataSnapshot, objectToSave, addHolidayRequest.getStartAt(), addHolidayRequest.getEndAt(), true);
+
+                database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
+                    if (databaseError != null) {
+                        System.err.println("OfficeId: " + officeId + ", Holiday saving failed " + databaseError.getMessage());
+                    } else {
+                        System.out.println("OfficeId: " + officeId + ", Holiday saved successdully.");
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Registration request - officeId: " + officeId + ", The read failed: " + databaseError.getCode());
             }
         });
     }

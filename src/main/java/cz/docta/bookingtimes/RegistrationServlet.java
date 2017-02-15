@@ -1,6 +1,5 @@
 package cz.docta.bookingtimes;
 
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.*;
 import com.google.gson.Gson;
 import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
@@ -54,7 +53,7 @@ public class RegistrationServlet extends FirebaseServlet {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                System.err.println("The read failed: " + databaseError.getCode());
+                System.err.println("Registration request - officeId: " + officeId + ", The read failed: " + databaseError.getCode());
             }
         });
     }

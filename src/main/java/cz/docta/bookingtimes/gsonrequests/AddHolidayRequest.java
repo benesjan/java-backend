@@ -33,8 +33,16 @@ public class AddHolidayRequest {
         this.idToken = idToken;
     }
 
+    public Long getStartAt() {
+        return startAt;
+    }
+
     public void setStartAt(Long startAt) {
         this.startAt = startAt;
+    }
+
+    public Long getEndAt() {
+        return endAt;
     }
 
     public void setEndAt(Long endAt) {

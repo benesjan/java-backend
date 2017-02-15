@@ -61,20 +61,22 @@ abstract class BookingTimesServlet extends HttpServlet {
             currentDate = new DateTime(); // If the lastGeneratedDate is not available set to tomorrow
         }
 
+        // Iterate through dates and generate values accordingly
         DateTime lastDate = new DateTime().plusDays(numberOfDays);
         DataSnapshot dayHours;
         while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) == -1) {
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
-                this.generateHours(updatedOfficeData, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId);
+                this.generateHours(updatedOfficeData, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId, false);
             }
         }
 
         Map<String, Integer> lastGeneratedDate = new HashMap<>();
 
-        // On this date the condition hasn't passed, so it has to be decremented in order to represent last generated date
+        // On this date the condition hasn't passed, so it has to be decremented in order to represent the last generated date
         currentDate = currentDate.minusDays(1);
 
+        // Set the last generated date
         lastGeneratedDate.put("year", currentDate.getYear());
         lastGeneratedDate.put("month", currentDate.getMonthOfYear());
         lastGeneratedDate.put("date", currentDate.getDayOfMonth());
@@ -100,9 +102,10 @@ abstract class BookingTimesServlet extends HttpServlet {
      * @param intervals         List of Interval objects, which take place that day
      * @param date              Date at which the appointment times are generated
      * @param officeId          Id of the office
+     * @param delete            If set to true booking times in the interval will be deleted
      */
 
-    private void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
+    private void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean delete) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -116,7 +119,7 @@ abstract class BookingTimesServlet extends HttpServlet {
                 String bookTime = prefix + ((currentTime.getHourOfDay() < 10) ? "0" : "") + currentTime.getHourOfDay()
                         + ((currentTime.getMinuteOfHour() < 10) ? "0" : "") + currentTime.getMinuteOfHour();
 
-                updatedOfficeData.put("/appointmentsPublic/" + officeId + "/" + bookTime, true);
+                updatedOfficeData.put("/appointmentsPublic/" + officeId + "/" + bookTime, (delete) ? null : true);
 
                 currentTime = nextTime;
             }

@@ -12,7 +12,7 @@ public class CronTimesServlet extends BookingTimesServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         FirebaseDatabase database = this.database;
 
-        resp.getWriter().println("OK");
+        resp.getWriter().append("{\"success\":true}");
 
         DatabaseReference ref = database.getReference("generatorInfo");
 

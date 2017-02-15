@@ -1,7 +1,10 @@
 package cz.docta.bookingtimes;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.*;
 import com.google.gson.Gson;
+import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
+import cz.docta.bookingtimes.generator.Generator;
 import cz.docta.bookingtimes.gsonrequests.RegistrationRequest;
 
 import javax.servlet.ServletException;
@@ -10,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
-public class RegistrationServlet extends BookingTimesServlet {
+public class RegistrationServlet extends FirebaseServlet {
 
     @Override
     protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -40,13 +43,13 @@ public class RegistrationServlet extends BookingTimesServlet {
     }
 
     private void handleFirebaseLogic(String officeId) {
-        FirebaseDatabase database = this.database;
+        FirebaseDatabase database = Generator.getServiceDatabase();
         DatabaseReference ref = database.getReference("generatorInfo/" + officeId);
 
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                generateAndSaveHours(dataSnapshot, database);
+                Generator.generateAndSaveHours(dataSnapshot, database);
             }
 
             @Override

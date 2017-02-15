@@ -1,4 +1,4 @@
-package cz.docta.bookingtimes;
+package cz.docta.bookingtimes.generator;
 
 import org.joda.time.LocalTime;
 

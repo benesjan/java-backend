@@ -1,4 +1,4 @@
-package cz.docta.bookingtimes;
+package cz.docta.bookingtimes.generator;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -9,29 +9,52 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.http.HttpServlet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-abstract class BookingTimesServlet extends HttpServlet {
+/**
+ * @author Jan Benes (janbenes1234@gmail.com)
+ */
+public class Generator {
+    private static String serviceAppName = "serviceApp";
 
-    FirebaseDatabase database = null;
+    public static String getServiceAppName() {
+        return serviceAppName;
+    }
 
-    @Override
-    public void init(ServletConfig config) {
-        if (FirebaseApp.getApps().size() == 0) {
-            FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredential(FirebaseCredentials.applicationDefault())
-                    .setDatabaseUrl("https://doctor-appointment-system.firebaseio.com/")
-                    .build();
+    public static FirebaseApp getServiceApp() {
+        return FirebaseApp.getInstance(serviceAppName);
+    }
 
-            FirebaseApp.initializeApp(options);
+    public static FirebaseDatabase getServiceDatabase() {
+        return FirebaseDatabase.getInstance(getServiceApp());
+    }
+
+    public static FirebaseDatabase getUserDatabase(String uid) {
+        return FirebaseDatabase.getInstance(getAppAsUser(uid));
+    }
+
+    public static FirebaseApp getAppAsUser(String uid) {
+        Map<String, Object> auth = new HashMap<>();
+        String appName = "userApp" + uid;
+        auth.put("uid", uid);
+
+        FirebaseOptions options = new FirebaseOptions.Builder()
+                .setCredential(FirebaseCredentials.applicationDefault())
+                .setDatabaseUrl("https://doctor-appointment-system.firebaseio.com/")
+                .setDatabaseAuthVariableOverride(auth)
+                .build();
+
+
+        try {
+            FirebaseApp.initializeApp(options, appName);
+        } catch (IllegalStateException ex) {
+            // TODO: Find a way to verify if app exists without throwing the exception or delete the app after the usage.
         }
 
-        this.database = FirebaseDatabase.getInstance();
+        return FirebaseApp.getInstance(appName);
     }
 
     /**
@@ -40,12 +63,11 @@ abstract class BookingTimesServlet extends HttpServlet {
      *
      * @param office Raw snapshot of data received from Firebase
      */
-    void generateAndSaveHours(DataSnapshot office, FirebaseDatabase database) {
+    public static void generateAndSaveHours(DataSnapshot office, FirebaseDatabase database) {
         String officeId = office.getKey();
         Integer visitLength = office.child("visitLength").getValue(Integer.class);
         Integer numberOfDays = office.child("numberOfDays").getValue(Integer.class);
 
-        DatabaseReference ref = database.getReference("/");
         Map updatedOfficeData = new HashMap();
 
         DateTime currentDate;
@@ -67,7 +89,7 @@ abstract class BookingTimesServlet extends HttpServlet {
         while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) == -1) {
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
-                this.generateHours(updatedOfficeData, visitLength, this.getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId, false);
+                generateHours(updatedOfficeData, visitLength, getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId, false);
             }
         }
 
@@ -84,7 +106,7 @@ abstract class BookingTimesServlet extends HttpServlet {
         updatedOfficeData.put("/generatorInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);
         updatedOfficeData.put("/officeFullInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);
 
-        ref.updateChildren(updatedOfficeData, (databaseError, databaseReference) -> {
+        database.getReference("/").updateChildren(updatedOfficeData, (databaseError, databaseReference) -> {
             if (databaseError != null) {
                 System.err.println("OfficeId: " + officeId + ", Data could not be saved " + databaseError.getMessage());
             } else {
@@ -105,7 +127,7 @@ abstract class BookingTimesServlet extends HttpServlet {
      * @param delete            If set to true booking times in the interval will be deleted
      */
 
-    private void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean delete) {
+    private static void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean delete) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -130,7 +152,7 @@ abstract class BookingTimesServlet extends HttpServlet {
      * @param officeHours (example: 7:30-12:30,13:30-15:30)
      * @return List of Intervals. Each Interval consists of Start time (LocalTime object) and end time.
      */
-    private List<Interval> getIntervals(String officeHours) {
+    private static List<Interval> getIntervals(String officeHours) {
         ArrayList<Interval> intervals = new ArrayList<>();
 
         for (String interval : officeHours.split(",")) {

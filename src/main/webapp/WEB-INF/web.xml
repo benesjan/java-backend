@@ -15,6 +15,10 @@
         <servlet-name>holidaydeletion</servlet-name>
         <servlet-class>cz.docta.bookingtimes.DeleteHolidayServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>holidayaddition</servlet-name>
+        <servlet-class>cz.docta.bookingtimes.AddHolidayServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <!--Invoked by cron-->
         <servlet-name>crontimes</servlet-name>
@@ -27,5 +31,9 @@
     <servlet-mapping>
         <servlet-name>holidaydeletion</servlet-name>
         <url-pattern>/holiday/delete</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>holidayaddition</servlet-name>
+        <url-pattern>/holiday/add</url-pattern>
     </servlet-mapping>
 </web-app>

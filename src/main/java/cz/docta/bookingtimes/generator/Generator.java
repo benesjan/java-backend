@@ -8,10 +8,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Jan Benes (janbenes1234@gmail.com)
@@ -97,6 +94,7 @@ public class Generator {
 
         Map<String, Object> updatedOfficeData = new HashMap<>();
 
+        DateTime lastDate = new DateTime().plusDays(numberOfDays);
         DateTime currentDate;
         if (office.hasChild("lastGeneratedDate")) {
             currentDate = new DateTime(
@@ -110,10 +108,10 @@ public class Generator {
             currentDate = new DateTime(); // If the lastGeneratedDate is not available set to tomorrow
         }
 
-        // Iterate through dates and generate values accordingly
-        DateTime lastDate = new DateTime().plusDays(numberOfDays);
+//        List relevantHolidays = getRelevantHolidays(office.child("holidays"), lastDate);
+
         DataSnapshot dayHours;
-        // Iterate until the currentDate is bigger than last date
+        // Iterate until the currentDate is bigger than last date and generate values accordingly
         while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) != 1) {
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
@@ -139,6 +137,29 @@ public class Generator {
             }
         });
 
+    }
+
+    /**
+     *
+     * @param holidays DataSnapshot of all the holidays which belong to the
+     * @param lastDate last date in which booking times will be generated
+     * @return List of holidays which intersects with generated dates
+     */
+    private static List getRelevantHolidays(DataSnapshot holidays, DateTime lastDate) {
+        ArrayList<Holidays> toReturn = new ArrayList<>();
+
+        // Comparable timestamp is incremented by onme day in order to correctly evaluate the intersection.
+        // If it wasn't incremented there might be a case when lastDate is at 14:00 and start of holidays
+        // is at 15:00 and the holidays would not be added. A.k.a time of lastDate is arbitrary
+        Long millisToCompare = lastDate.plusDays(1).getMillis();
+
+        for (DataSnapshot _holidays : holidays.getChildren()) {
+            if (Long.parseLong(_holidays.getKey()) < millisToCompare) {
+                toReturn.add(new Holidays(_holidays));
+            }
+        }
+
+        return toReturn;
     }
 
     /**

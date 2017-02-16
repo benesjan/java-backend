@@ -64,15 +64,9 @@ public class AddHolidayRequest {
                 '}';
     }
 
-    public Map getGeneratorMap() {
-        Map toReturn = new HashMap();
-        toReturn.put("startAt", this.startAt);
-        toReturn.put("endAt", this.endAt);
-        return toReturn;
-    }
-
     public Map getOfficeHolidaysMap() {
-        Map toReturn = this.getGeneratorMap();
+        Map toReturn = new HashMap();
+        toReturn.put("endAt", this.endAt);
         toReturn.put("name", this.name);
         return toReturn;
     }

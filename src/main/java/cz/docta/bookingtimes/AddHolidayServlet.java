@@ -54,11 +54,11 @@ public class AddHolidayServlet extends FirebaseServlet {
 
     private void addHoliday(FirebaseDatabase database, AddHolidayRequest addHolidayRequest) {
         // TODO: delete booking times if necessary
-        String holidayId = database.getReference("/").push().getKey();
+        Long holidayId = addHolidayRequest.getStartAt();
         String officeId = addHolidayRequest.getOfficeId();
         Map<String, Object> objectToSave = new HashMap<>();
 
-        objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getGeneratorMap());
+        objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getEndAt());
         objectToSave.put("/officeHolidays/" + officeId + "/" + holidayId, addHolidayRequest.getOfficeHolidaysMap());
 
         database.getReference("generatorInfo/" + officeId).addListenerForSingleValueEvent(new ValueEventListener() {

@@ -7,8 +7,8 @@ import org.joda.time.DateTime;
  * @author Jan Benes (janbenes1234@gmail.com)
  */
 public class Holidays {
-    private DateTime startAt;
-    private DateTime endAt;
+    DateTime startAt;
+    DateTime endAt;
 
     Holidays(DataSnapshot holidays) {
         this.startAt = new DateTime(Long.parseLong(holidays.getKey()));

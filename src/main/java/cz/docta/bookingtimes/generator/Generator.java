@@ -105,17 +105,19 @@ public class Generator {
                     0
             );
         } else {
-            currentDate = new DateTime(); // If the lastGeneratedDate is not available set to tomorrow
+            currentDate = new DateTime().withTimeAtStartOfDay(); // If the lastGeneratedDate is not available set to tomorrow
         }
 
-//        List relevantHolidays = getRelevantHolidays(office.child("holidays"), lastDate);
+        List relevantHolidays = getRelevantHolidays(office.child("holidays"), lastDate);
 
         DataSnapshot dayHours;
         // Iterate until the currentDate is bigger than last date and generate values accordingly
         while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) != 1) {
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
-                generateHours(updatedOfficeData, visitLength, getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId, false);
+                List<Interval> intervalList = shrinkByHolidays(getIntervals(dayHours.child("hours").getValue(String.class)), relevantHolidays, currentDate);
+
+                generateHours(updatedOfficeData, visitLength, intervalList, currentDate, officeId, false);
             }
         }
 
@@ -140,7 +142,6 @@ public class Generator {
     }
 
     /**
-     *
      * @param holidays DataSnapshot of all the holidays which belong to the
      * @param lastDate last date in which booking times will be generated
      * @return List of holidays which intersects with generated dates
@@ -206,5 +207,32 @@ public class Generator {
         }
 
         return intervals;
+    }
+
+    /**
+     * @param intervalList currentDate's intervals
+     * @param holidaysList list of holidays
+     * @param currentDate  date which has to be set to 00:00
+     * @return list of modified intervals
+     */
+    private static List<Interval> shrinkByHolidays(List<Interval> intervalList, List<Holidays> holidaysList, DateTime currentDate) {
+        if (intervalList.size() == 0) return intervalList; // Performance improvement
+
+        for (Holidays holidays : holidaysList) {
+            Interval holidayInterval = Interval.getPenetrationOfHolidaysAndDate(holidays, currentDate);
+            if (holidayInterval != null) {
+                for (Interval interval : intervalList) {
+                    if (interval.start.compareTo(holidayInterval.end) != 1) {
+                        interval.start = holidayInterval.end;
+                    }
+                    if (interval.end.compareTo(holidayInterval.start) != 1) {
+
+                    }
+                    // TODO
+                }
+            }
+        }
+
+        return intervalList;
     }
 }

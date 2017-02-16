@@ -221,15 +221,44 @@ public class Generator {
         for (Holidays holidays : holidaysList) {
             Interval holidayInterval = Interval.getPenetrationOfHolidaysAndDate(holidays, currentDate);
             if (holidayInterval != null) {
-                for (Interval interval : intervalList) {
-                    if (interval.start.compareTo(holidayInterval.end) != 1) {
-                        interval.start = holidayInterval.end;
-                    }
-                    if (interval.end.compareTo(holidayInterval.start) != 1) {
+                ArrayList<Interval> temporary = new ArrayList<>();
 
+                for (Interval interval : intervalList) {
+
+                    if (interval.start.compareTo(holidayInterval.start) != 1) {
+                        // Original interval starts before holiday
+
+                        if (interval.end.compareTo(holidayInterval.start) != 1) {
+                            // There is no penetration of holiday interval and original interval (start and end is smaller than holiday start)
+                            temporary.add(interval);
+                        } else if (interval.end.compareTo(holidayInterval.end) != 1) {
+                            // Original interval ends between start and end of holidays
+                            interval.end = holidayInterval.start;
+                            temporary.add(interval);
+                        } else {
+                            // Original ends after holidays end. Split interval in 2
+                            temporary.add(new Interval(interval.start, holidayInterval.start));
+                            interval.start = holidayInterval.end;
+                            temporary.add(interval);
+                        }
+
+                    } else if (interval.start.compareTo(holidayInterval.end) != 1) {
+                        // Original interval starts between start and end of holidayInterval
+
+                        // If this condition is not met (a.k.a. the end of original interval is smaller than the end of holiday interval)
+                        // the interval as a whole is deleted
+                        if (interval.end.compareTo(holidayInterval.end) == 1) {
+                            // The original interval ends after the holidays so start is set to end of holidays.
+                            interval.start = holidayInterval.end;
+                            temporary.add(interval);
+                        }
+                    } else {
+                        // Original interval starts after the end of holidays. No modifications will be made.
+                        temporary.add(interval);
                     }
-                    // TODO
                 }
+
+                intervalList = temporary;
             }
         }
 

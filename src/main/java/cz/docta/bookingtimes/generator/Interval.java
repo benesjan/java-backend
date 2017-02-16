@@ -19,7 +19,7 @@ public class Interval {
         this.end = new LocalTime(Integer.parseInt(end[0]), Integer.parseInt(end[1]));
     }
 
-    private Interval(LocalTime start, LocalTime end) {
+    Interval(LocalTime start, LocalTime end) {
         this.start = start;
         this.end = end;
     }

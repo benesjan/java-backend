@@ -113,7 +113,8 @@ public class Generator {
         // Iterate through dates and generate values accordingly
         DateTime lastDate = new DateTime().plusDays(numberOfDays);
         DataSnapshot dayHours;
-        while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) == -1) {
+        // Iterate until the currentDate is bigger than last date
+        while ((currentDate = currentDate.plusDays(1)).compareTo(lastDate) != 1) {
             dayHours = office.child("officeHours/" + (currentDate.getDayOfWeek() - 1));
             if (dayHours.child("available").getValue(Boolean.class)) {
                 generateHours(updatedOfficeData, visitLength, getIntervals(dayHours.child("hours").getValue(String.class)), currentDate, officeId, false);
@@ -122,13 +123,10 @@ public class Generator {
 
         Map<String, Integer> lastGeneratedDate = new HashMap<>();
 
-        // On this date the condition hasn't passed, so it has to be decremented in order to represent the last generated date
-        currentDate = currentDate.minusDays(1);
-
         // Set the last generated date
-        lastGeneratedDate.put("year", currentDate.getYear());
-        lastGeneratedDate.put("month", currentDate.getMonthOfYear());
-        lastGeneratedDate.put("date", currentDate.getDayOfMonth());
+        lastGeneratedDate.put("year", lastDate.getYear());
+        lastGeneratedDate.put("month", lastDate.getMonthOfYear());
+        lastGeneratedDate.put("date", lastDate.getDayOfMonth());
 
         updatedOfficeData.put("/generatorInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);
         updatedOfficeData.put("/officeFullInfo/" + officeId + "/lastGeneratedDate", lastGeneratedDate);

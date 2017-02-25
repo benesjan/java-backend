@@ -58,13 +58,16 @@ public class AddHolidayServlet extends FirebaseServlet {
         String officeId = addHolidayRequest.getOfficeId();
         Map<String, Object> objectToSave = new HashMap<>();
 
-        objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getEndAt());
         objectToSave.put("/officeHolidays/" + officeId + "/" + holidayId, addHolidayRequest.getOfficeHolidaysMap());
+        objectToSave.put("/officeFullInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getOfficeFullInfoMap());
 
         database.getReference("generatorInfo/" + officeId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Generator.generateHoursInInterval(dataSnapshot, objectToSave, addHolidayRequest.getStartAt(), addHolidayRequest.getEndAt(), true);
+                if (dataSnapshot.exists()) {
+                    objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getEndAt());
+                    Generator.generateHoursInInterval(dataSnapshot, objectToSave, addHolidayRequest.getStartAt(), addHolidayRequest.getEndAt(), true);
+                }
 
                 database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
                     if (databaseError != null) {

@@ -59,6 +59,7 @@ public class DeleteHolidayServlet extends FirebaseServlet {
 
         Map objectToSave = new HashMap();
         objectToSave.put("/officeHolidays/" + deleteHolidayRequest.getOfficeId() + "/" + deleteHolidayRequest.getHolidayId(), null);
+        objectToSave.put("/officeFullInfo/" + deleteHolidayRequest.getOfficeId() + "/holidays/" + deleteHolidayRequest.getHolidayId(), null);
         objectToSave.put("/generatorInfo/" + deleteHolidayRequest.getOfficeId() + "/holidays/" + deleteHolidayRequest.getHolidayId(), null);
 
         database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {

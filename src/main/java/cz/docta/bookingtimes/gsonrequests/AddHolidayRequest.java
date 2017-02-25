@@ -12,6 +12,7 @@ public class AddHolidayRequest {
     private Long startAt;
     private Long endAt;
     private String name;
+    private String substituteDoctorName;
 
     public Boolean areAttributesValid() {
         return this.officeId != null && this.idToken != null && this.startAt != null && this.endAt != null && this.name != null;
@@ -53,6 +54,14 @@ public class AddHolidayRequest {
         this.name = name;
     }
 
+    public String getSubstituteDoctorName() {
+        return substituteDoctorName;
+    }
+
+    public void setSubstituteDoctorName(String substituteDoctorName) {
+        this.substituteDoctorName = (substituteDoctorName.trim().isEmpty()) ? null : substituteDoctorName;
+    }
+
     @Override
     public String toString() {
         return "AddHolidayRequest{" +
@@ -64,9 +73,15 @@ public class AddHolidayRequest {
                 '}';
     }
 
-    public Map getOfficeHolidaysMap() {
+    public Map getOfficeFullInfoMap() {
         Map toReturn = new HashMap();
         toReturn.put("endAt", this.endAt);
+        toReturn.put("substituteDoctorName", this.substituteDoctorName);
+        return toReturn;
+    }
+
+    public Map getOfficeHolidaysMap() {
+        Map toReturn = this.getOfficeFullInfoMap();
         toReturn.put("name", this.name);
         return toReturn;
     }

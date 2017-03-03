@@ -9,6 +9,8 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Jan Benes (janbenes1234@gmail.com)
@@ -23,9 +25,13 @@ public abstract class FirebaseServlet extends HttpServlet {
             InputStream serviceKeyStream = this.getServletContext().getResourceAsStream("/WEB-INF/service_key.json");
 
             if (FirebaseApp.getApps().size() == 0) {
+                Map<String, Object> auth = new HashMap<>();
+                auth.put("uid", "my-service-worker");
+
                 FirebaseOptions options = new FirebaseOptions.Builder()
                         .setCredential(FirebaseCredentials.fromCertificate(serviceKeyStream))
                         .setDatabaseUrl("https://doctor-appointment-system.firebaseio.com/")
+                        .setDatabaseAuthVariableOverride(auth)
                         .build();
 
                 FirebaseApp.initializeApp(options, Generator.getServiceAppName());

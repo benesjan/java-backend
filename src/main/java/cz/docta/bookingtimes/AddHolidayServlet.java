@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
 import cz.docta.bookingtimes.generator.Generator;
 import cz.docta.bookingtimes.gsonrequests.AddHolidayRequest;
+import org.joda.time.DateTime;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -66,21 +67,60 @@ public class AddHolidayServlet extends FirebaseServlet {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getEndAt());
-                    Generator.generateHoursInInterval(dataSnapshot, objectToSave, addHolidayRequest.getStartAt(), addHolidayRequest.getEndAt(), true);
+                    if (isGenerationRequired(dataSnapshot, addHolidayRequest.getStartAt())) {
+                        deleteInterferingTimes(dataSnapshot, objectToSave, addHolidayRequest.getStartAt(), addHolidayRequest.getEndAt());
+                    }
                 }
 
-                database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
-                    if (databaseError != null) {
-                        System.err.println("OfficeId: " + officeId + ", Holiday saving failed " + databaseError.getMessage());
-                    } else {
-                        System.out.println("OfficeId: " + officeId + ", Holiday saved successdully.");
-                    }
-                });
+                saveObject(database, objectToSave, officeId);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 System.err.println("Registration request - officeId: " + officeId + ", The read failed: " + databaseError.getCode());
+            }
+        });
+    }
+
+    private void deleteInterferingTimes(DataSnapshot generatorSnapshot, Map objectToSave, Long startAtTimestamp, Long endAtTimestamp) {
+        Integer visitLength = generatorSnapshot.child("visitLength").getValue(Integer.class);
+        // I have top remove all times that interfere with holiday so I am subtracting 1 visit length in milliseconds
+        String startId = Generator.timestampToId(startAtTimestamp - visitLength * 60 * 1000);
+        String endId = Generator.timestampToId(endAtTimestamp);
+
+        // TODO
+//        Generator.generateHours(objectToSave, visitLength, );
+
+    }
+
+    /**
+     * @param generatorSnapshot Office generator snapshot
+     * @param startAtTimestamp  Timestamp of a start of the interval
+     * @return Boolean representing the comparison of the timestamp of the last generated date and the startAt timestamp.
+     */
+    private Boolean isGenerationRequired(DataSnapshot generatorSnapshot, Long startAtTimestamp) {
+        if (generatorSnapshot.hasChild("lastGeneratedDate")) {
+            // Get the timestamp in milliseconds of the end (plus 1 day) of the last generated date
+            Long timestamp = new DateTime(
+                    generatorSnapshot.child("lastGeneratedDate/year").getValue(Integer.class),
+                    generatorSnapshot.child("lastGeneratedDate/month").getValue(Integer.class),
+                    generatorSnapshot.child("lastGeneratedDate/date").getValue(Integer.class),
+                    0,
+                    0
+            ).plusDays(1).getMillis();
+
+            if (startAtTimestamp < timestamp) return true;
+        }
+
+        return false;
+    }
+
+    private void saveObject(FirebaseDatabase database, Map<String, Object> objectToSave, String officeId) {
+        database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
+            if (databaseError != null) {
+                System.err.println("OfficeId: " + officeId + ", Holiday saving failed " + databaseError.getMessage());
+            } else {
+                System.out.println("OfficeId: " + officeId + ", Holiday saved successdully.");
             }
         });
     }

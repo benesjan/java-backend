@@ -8,7 +8,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Jan Benes (janbenes1234@gmail.com)
@@ -53,32 +56,15 @@ public class Generator {
         return FirebaseApp.getInstance(appName);
     }
 
-    public static void generateHoursInInterval(DataSnapshot generatorSnapshot, Map objectToSave, Long startAtTimestamp, Long endAtTimestamp, Boolean setNull) {
-        if (isGenerationRequired(generatorSnapshot, startAtTimestamp)) {
-            // TODO
-        }
-    }
+    public static String timestampToId(Long timestamp) {
+        DateTime time = new DateTime(timestamp);
+        Integer month = time.getMonthOfYear();
+        Integer dayOfMonth = time.getDayOfMonth();
+        Integer hours = time.getHourOfDay();
+        Integer minutes = time.getMinuteOfHour();
 
-    /**
-     * @param generatorSnapshot Office generator snapshot
-     * @param startAtTimestamp  Timestamp of a start of the interval
-     * @return Boolean representing the comparison of the timestamp of the last generated date and the startAt timestamp.
-     */
-    private static Boolean isGenerationRequired(DataSnapshot generatorSnapshot, Long startAtTimestamp) {
-        if (generatorSnapshot.hasChild("lastGeneratedDate")) {
-            // Get the timestamp in milliseconds of the end (plus 1 day) of the last generated date
-            Long timestamp = new DateTime(
-                    generatorSnapshot.child("lastGeneratedDate/year").getValue(Integer.class),
-                    generatorSnapshot.child("lastGeneratedDate/month").getValue(Integer.class),
-                    generatorSnapshot.child("lastGeneratedDate/date").getValue(Integer.class),
-                    0,
-                    0
-            ).plusDays(1).getMillis();
-
-            if (startAtTimestamp < timestamp) return true;
-        }
-
-        return false;
+        return "" + time.getYear() + ((month < 10) ? "0" : "") + month + ((dayOfMonth < 10) ? "0" : "") + dayOfMonth
+                + ((hours < 10) ? "0" : "") + hours + ((minutes < 10) ? "0" : "") + minutes;
     }
 
     /**
@@ -164,17 +150,17 @@ public class Generator {
     }
 
     /**
-     * The following function generates booking times and saves them to updatedOfficeData map.
+     * The following function generates booking times and saves them to objectToSave map.
      *
-     * @param updatedOfficeData Map, which gets saved using the multi location update
-     * @param visitLength       Length of a doctor visit
-     * @param intervals         List of Interval objects, which take place that day
-     * @param date              Date at which the appointment times are generated
-     * @param officeId          Id of the office
-     * @param setNull           If set to true booking times in the interval will be deleted
+     * @param objectToSave Map, which gets saved using the multi location update
+     * @param visitLength  Length of a doctor visit
+     * @param intervals    List of Interval objects, which take place that day
+     * @param date         Date at which the appointment times are generated
+     * @param officeId     Id of the office
+     * @param setNull      If set to true booking times in the interval will be deleted
      */
 
-    private static void generateHours(Map updatedOfficeData, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean setNull) {
+    public static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean setNull) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -188,7 +174,7 @@ public class Generator {
                 String bookTime = prefix + ((currentTime.getHourOfDay() < 10) ? "0" : "") + currentTime.getHourOfDay()
                         + ((currentTime.getMinuteOfHour() < 10) ? "0" : "") + currentTime.getMinuteOfHour();
 
-                updatedOfficeData.put("/appointmentsPublic/" + officeId + "/" + bookTime, (setNull) ? null : true);
+                objectToSave.put("/appointmentsPublic/" + officeId + "/" + bookTime, (setNull) ? null : true);
 
                 currentTime = nextTime;
             }

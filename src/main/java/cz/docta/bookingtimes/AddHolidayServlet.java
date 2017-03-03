@@ -3,6 +3,7 @@ package cz.docta.bookingtimes;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 import com.google.gson.Gson;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
 import cz.docta.bookingtimes.generator.Generator;
 import cz.docta.bookingtimes.gsonrequests.AddHolidayRequest;
@@ -67,29 +68,45 @@ public class AddHolidayServlet extends FirebaseServlet {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getEndAt());
-                    if (isGenerationRequired(dataSnapshot, addHolidayRequest.getStartAt())) {
-                        deleteInterferingTimes(dataSnapshot, objectToSave, addHolidayRequest.getStartAt(), addHolidayRequest.getEndAt());
-                    }
                 }
 
+                if (dataSnapshot.exists() && isGenerationRequired(dataSnapshot, addHolidayRequest.getStartAt())) {
+                    deleteInterferingTimesAndSave(database, dataSnapshot, objectToSave, addHolidayRequest);
+                } else {
+                    saveObject(database, objectToSave, officeId);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("AddHolidays request (addHoliday method) - officeId: " + officeId + ", The read failed: " + databaseError.getCode());
+            }
+        });
+    }
+
+    private void deleteInterferingTimesAndSave(FirebaseDatabase database, DataSnapshot generatorSnapshot, Map objectToSave, AddHolidayRequest addHolidayRequest) {
+        String officeId = addHolidayRequest.getOfficeId();
+        Integer visitLength = generatorSnapshot.child("visitLength").getValue(Integer.class);
+
+        // I have top remove all times that interfere with holiday so I am subtracting 1 visit length in milliseconds
+        String startId = Generator.timestampToId(addHolidayRequest.getStartAt() - visitLength * 60 * 1000);
+        String endId = Generator.timestampToId(addHolidayRequest.getEndAt());
+
+        // Might rekt a patient if he managed to create an appointment just before the appointments are deleted
+        database.getReference("appointmentsPublic/" + officeId).orderByKey().startAt(startId).endAt(endId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot time : dataSnapshot.getChildren()) {
+                    objectToSave.put("/appointmentsPublic/" + officeId + "/" + time.getKey(), null);
+                }
                 saveObject(database, objectToSave, officeId);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                System.err.println("Registration request - officeId: " + officeId + ", The read failed: " + databaseError.getCode());
+                System.err.println("AddHolidays request (deleteInterferingTimesAndSave method) - officeId: " + officeId + ", The read failed: " + databaseError.getCode());
             }
         });
-    }
-
-    private void deleteInterferingTimes(DataSnapshot generatorSnapshot, Map objectToSave, Long startAtTimestamp, Long endAtTimestamp) {
-        Integer visitLength = generatorSnapshot.child("visitLength").getValue(Integer.class);
-        // I have top remove all times that interfere with holiday so I am subtracting 1 visit length in milliseconds
-        String startId = Generator.timestampToId(startAtTimestamp - visitLength * 60 * 1000);
-        String endId = Generator.timestampToId(endAtTimestamp);
-
-        // TODO
-//        Generator.generateHours(objectToSave, visitLength, );
 
     }
 

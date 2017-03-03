@@ -160,7 +160,7 @@ public class Generator {
      * @param setNull      If set to true booking times in the interval will be deleted
      */
 
-    public static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean setNull) {
+    private static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean setNull) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 

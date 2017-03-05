@@ -7,12 +7,20 @@ import org.joda.time.DateTime;
  * @author Jan Benes (janbenes1234@gmail.com)
  */
 public class Holidays {
-    DateTime startAt;
-    DateTime endAt;
+    private DateTime startAt;
+    private DateTime endAt;
 
-    Holidays(DataSnapshot holidays) {
+    public Holidays(DataSnapshot holidays) {
         this.startAt = new DateTime(Long.parseLong(holidays.getKey()));
         this.endAt = new DateTime(holidays.getValue(Long.class));
+    }
+
+    public DateTime getStartAt() {
+        return startAt;
+    }
+
+    public DateTime getEndAt() {
+        return endAt;
     }
 
     @Override

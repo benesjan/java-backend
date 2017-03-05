@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
 import cz.docta.bookingtimes.generator.Generator;
 import cz.docta.bookingtimes.gsonrequests.AddHolidayRequest;
-import org.joda.time.DateTime;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -54,7 +53,6 @@ public class AddHolidayServlet extends FirebaseServlet {
     }
 
     private void addHoliday(FirebaseDatabase database, AddHolidayRequest addHolidayRequest) {
-        // TODO: delete booking times if necessary
         Long holidayId = addHolidayRequest.getStartAt();
         String officeId = addHolidayRequest.getOfficeId();
         Map<String, Object> objectToSave = new HashMap<>();
@@ -69,7 +67,7 @@ public class AddHolidayServlet extends FirebaseServlet {
                     objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getEndAt());
                 }
 
-                if (dataSnapshot.exists() && isGenerationRequired(dataSnapshot, addHolidayRequest.getStartAt())) {
+                if (dataSnapshot.exists() && Generator.areHollidaysColliding(dataSnapshot, addHolidayRequest.getStartAt())) {
                     deleteInterferingTimesAndSave(database, dataSnapshot, objectToSave, addHolidayRequest);
                 } else {
                     saveObject(database, objectToSave, officeId);
@@ -169,28 +167,6 @@ public class AddHolidayServlet extends FirebaseServlet {
             }
         });
 
-    }
-
-    /**
-     * @param generatorSnapshot Office generator snapshot
-     * @param startAtTimestamp  Timestamp of a start of the interval
-     * @return Boolean representing the comparison of the timestamp of the last generated date and the startAt timestamp.
-     */
-    private Boolean isGenerationRequired(DataSnapshot generatorSnapshot, Long startAtTimestamp) {
-        if (generatorSnapshot.hasChild("lastGeneratedDate")) {
-            // Get the timestamp in milliseconds of the end (plus 1 day) of the last generated date
-            Long timestamp = new DateTime(
-                    generatorSnapshot.child("lastGeneratedDate/year").getValue(Integer.class),
-                    generatorSnapshot.child("lastGeneratedDate/month").getValue(Integer.class),
-                    generatorSnapshot.child("lastGeneratedDate/date").getValue(Integer.class),
-                    0,
-                    0
-            ).plusDays(1).getMillis();
-
-            if (startAtTimestamp < timestamp) return true;
-        }
-
-        return false;
     }
 
     private synchronized void saveObject(FirebaseDatabase database, Map<String, Object> objectToSave, String officeId) {

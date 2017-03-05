@@ -103,7 +103,7 @@ public class Generator {
             if (dayHours.child("available").getValue(Boolean.class)) {
                 List<Interval> intervalList = shrinkByHolidays(getIntervals(dayHours.child("hours").getValue(String.class)), relevantHolidays, currentDate);
 
-                generateHours(updatedOfficeData, visitLength, intervalList, currentDate, officeId, false);
+                generateHours(updatedOfficeData, visitLength, intervalList, currentDate, officeId);
             }
         }
 
@@ -135,7 +135,7 @@ public class Generator {
     private static List getRelevantHolidays(DataSnapshot holidays, DateTime lastDate) {
         ArrayList<Holidays> toReturn = new ArrayList<>();
 
-        // Comparable timestamp is incremented by onme day in order to correctly evaluate the intersection.
+        // Comparable timestamp is incremented by one day in order to correctly evaluate the intersection.
         // If it wasn't incremented there might be a case when lastDate is at 14:00 and start of holidays
         // is at 15:00 and the holidays would not be added. A.k.a time of lastDate is arbitrary
         Long millisToCompare = lastDate.plusDays(1).getMillis();
@@ -157,10 +157,9 @@ public class Generator {
      * @param intervals    List of Interval objects, which take place that day
      * @param date         Date at which the appointment times are generated
      * @param officeId     Id of the office
-     * @param setNull      If set to true booking times in the interval will be deleted
      */
 
-    private static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId, Boolean setNull) {
+    private static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -174,7 +173,7 @@ public class Generator {
                 String bookTime = prefix + ((currentTime.getHourOfDay() < 10) ? "0" : "") + currentTime.getHourOfDay()
                         + ((currentTime.getMinuteOfHour() < 10) ? "0" : "") + currentTime.getMinuteOfHour();
 
-                objectToSave.put("/appointmentsPublic/" + officeId + "/" + bookTime, (setNull) ? null : true);
+                objectToSave.put("/appointmentsPublic/" + officeId + "/" + bookTime, true);
 
                 currentTime = nextTime;
             }
@@ -249,5 +248,27 @@ public class Generator {
         }
 
         return intervalList;
+    }
+
+    /**
+     * @param generatorSnapshot Office generator snapshot
+     * @param startAtTimestamp  Timestamp of a start of the interval
+     * @return Boolean representing the comparison of the timestamp of the last generated date and the startAt timestamp.
+     */
+    public static Boolean areHollidaysColliding(DataSnapshot generatorSnapshot, Long startAtTimestamp) {
+        if (generatorSnapshot.hasChild("lastGeneratedDate")) {
+            // Get the timestamp in milliseconds of the end (plus 1 day) of the last generated date
+            Long timestamp = new DateTime(
+                    generatorSnapshot.child("lastGeneratedDate/year").getValue(Integer.class),
+                    generatorSnapshot.child("lastGeneratedDate/month").getValue(Integer.class),
+                    generatorSnapshot.child("lastGeneratedDate/date").getValue(Integer.class),
+                    0,
+                    0
+            ).plusDays(1).getMillis();
+
+            if (startAtTimestamp < timestamp) return true;
+        }
+
+        return false;
     }
 }

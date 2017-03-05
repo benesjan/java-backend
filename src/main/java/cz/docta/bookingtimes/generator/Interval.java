@@ -25,24 +25,25 @@ public class Interval {
     }
 
     /**
-     *
-     * @param holidays Holidays for which the penetration interval is going to be computed
+     * @param holidays   Holidays for which the penetration interval is going to be computed
      * @param startOfDay beginning of the day in which the interval is going to be computed
      * @return Interval of penetration of holidays and some particular day
      */
-    static Interval getPenetrationOfHolidaysAndDate(Holidays holidays, DateTime startOfDay) {
+    public static Interval getPenetrationOfHolidaysAndDate(Holidays holidays, DateTime startOfDay) {
         DateTime endOfDay = startOfDay.plusDays(1); // 00:00 of the next day
         LocalTime start;
         LocalTime end;
+        DateTime holidaysStart = holidays.getStartAt();
+        DateTime holidaysEnd = holidays.getEndAt();
 
-        if (isInInterval(startOfDay, endOfDay, holidays.startAt)) {
-            start = new LocalTime(holidays.startAt.getHourOfDay(), holidays.startAt.getMinuteOfHour());
-            end = (isInInterval(startOfDay, endOfDay, holidays.endAt)) ?
-                    new LocalTime(holidays.endAt.getHourOfDay(), holidays.endAt.getMinuteOfHour()) : new LocalTime(23, 59);
-        } else if (isInInterval(startOfDay, endOfDay, holidays.endAt)) {
+        if (isInInterval(startOfDay, endOfDay, holidaysStart)) {
+            start = new LocalTime(holidaysStart.getHourOfDay(), holidaysStart.getMinuteOfHour());
+            end = (isInInterval(startOfDay, endOfDay, holidaysEnd)) ?
+                    new LocalTime(holidaysEnd.getHourOfDay(), holidaysEnd.getMinuteOfHour()) : new LocalTime(23, 59);
+        } else if (isInInterval(startOfDay, endOfDay, holidaysEnd)) {
             start = new LocalTime(0, 0);
-            end = new LocalTime(holidays.endAt.getHourOfDay(), holidays.endAt.getMinuteOfHour());
-        } else if (startOfDay.compareTo(holidays.startAt) == 1 && endOfDay.compareTo(holidays.endAt) == -1) {
+            end = new LocalTime(holidaysEnd.getHourOfDay(), holidaysEnd.getMinuteOfHour());
+        } else if (startOfDay.compareTo(holidaysStart) == 1 && endOfDay.compareTo(holidaysEnd) == -1) {
             // Date is fully within holidays
             start = new LocalTime(0, 0);
             end = new LocalTime(23, 59);
@@ -54,9 +55,8 @@ public class Interval {
     }
 
     /**
-     *
-     * @param startOfDay start of the interval
-     * @param endOfDay end of the interval
+     * @param startOfDay  start of the interval
+     * @param endOfDay    end of the interval
      * @param dateToCheck value which is going to be checked
      * @return Boolean value which represents if the dateToCheck is in some interval
      */

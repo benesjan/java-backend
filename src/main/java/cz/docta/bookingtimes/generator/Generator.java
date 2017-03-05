@@ -159,7 +159,7 @@ public class Generator {
      * @param officeId     Id of the office
      */
 
-    private static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
+    public static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -184,7 +184,7 @@ public class Generator {
      * @param officeHours (example: 7:30-12:30,13:30-15:30)
      * @return List of Intervals. Each Interval consists of Start time (LocalTime object) and end time.
      */
-    private static List<Interval> getIntervals(String officeHours) {
+    public static List<Interval> getIntervals(String officeHours) {
         ArrayList<Interval> intervals = new ArrayList<>();
 
         for (String interval : officeHours.split(",")) {

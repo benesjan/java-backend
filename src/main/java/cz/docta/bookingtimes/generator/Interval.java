@@ -7,8 +7,8 @@ import org.joda.time.LocalTime;
  * @author Jan Benes
  */
 public class Interval {
-    LocalTime start;
-    LocalTime end;
+    public LocalTime start;
+    public LocalTime end;
 
     Interval(String interval) {
         String[] timeVals = interval.split("-");
@@ -19,7 +19,7 @@ public class Interval {
         this.end = new LocalTime(Integer.parseInt(end[0]), Integer.parseInt(end[1]));
     }
 
-    Interval(LocalTime start, LocalTime end) {
+    public Interval(LocalTime start, LocalTime end) {
         this.start = start;
         this.end = end;
     }

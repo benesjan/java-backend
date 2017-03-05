@@ -2,3 +2,7 @@ cron:
 - description: daily booking time generation
   url: /cron/generate
   schedule: every 24 hours
+
+- description: periodic garbage cleaning
+  url: /cron/clean
+  schedule: every 6 hours

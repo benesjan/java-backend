@@ -8,6 +8,10 @@
         <servlet-class>cz.docta.bookingtimes.CronTimesServlet</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>crongarbage</servlet-name>
+        <servlet-class>cz.docta.bookingtimes.CronGarbageServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>registration</servlet-name>
         <servlet-class>cz.docta.bookingtimes.RegistrationServlet</servlet-class>
     </servlet>
@@ -24,9 +28,12 @@
         <servlet-class>cz.docta.bookingtimes.InfoChangedServlet</servlet-class>
     </servlet>
     <servlet-mapping>
-        <!--Invoked by cron-->
         <servlet-name>crontimes</servlet-name>
         <url-pattern>/cron/generate</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>crongarbage</servlet-name>
+        <url-pattern>/cron/clean</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>registration</servlet-name>

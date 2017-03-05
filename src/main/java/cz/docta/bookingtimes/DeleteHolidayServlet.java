@@ -151,7 +151,7 @@ public class DeleteHolidayServlet extends FirebaseServlet {
             if (databaseError != null) {
                 System.err.println("OfficeId: " + officeId + ", Holiday deleting failed " + databaseError.getMessage());
             } else {
-                System.out.println("OfficeId: " + officeId + ", Holiday deleted successdully.");
+                System.out.println("OfficeId: " + officeId + ", Holiday deleted successfully.");
             }
         });
     }

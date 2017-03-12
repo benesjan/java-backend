@@ -67,7 +67,7 @@ public class AddHolidayServlet extends FirebaseServlet {
                     objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayId, addHolidayRequest.getEndAt());
                 }
 
-                if (dataSnapshot.exists() && Generator.areHollidaysColliding(dataSnapshot, addHolidayRequest.getStartAt())) {
+                if (dataSnapshot.exists() && Generator.areHolidaysColliding(dataSnapshot, addHolidayRequest.getStartAt())) {
                     deleteInterferingTimesAndSave(database, dataSnapshot, objectToSave, addHolidayRequest);
                 } else {
                     saveObject(database, objectToSave, officeId);

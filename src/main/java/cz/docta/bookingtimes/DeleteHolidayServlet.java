@@ -11,7 +11,7 @@ import cz.docta.bookingtimes.generator.Generator;
 import cz.docta.bookingtimes.generator.Holidays;
 import cz.docta.bookingtimes.generator.Interval;
 import cz.docta.bookingtimes.gsonrequests.DeleteHolidayRequest;
-import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -73,7 +73,7 @@ public class DeleteHolidayServlet extends FirebaseServlet {
         database.getReference("generatorInfo/" + officeId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists() && Generator.areHollidaysColliding(dataSnapshot, Long.parseLong(deleteHolidayRequest.getHolidayId()))) {
+                if (dataSnapshot.exists() && Generator.areHolidaysColliding(dataSnapshot, Long.parseLong(deleteHolidayRequest.getHolidayId()))) {
                     generateTimesAndSave(database, deleteHolidayRequest, dataSnapshot, objectToSave);
                 } else {
                     saveObject(database, objectToSave, officeId);
@@ -89,14 +89,12 @@ public class DeleteHolidayServlet extends FirebaseServlet {
 
     private void generateTimesAndSave(FirebaseDatabase database, DeleteHolidayRequest deleteHolidayRequest, DataSnapshot generatorSnapshot, Map objectToSave) {
         Holidays holidays = new Holidays(generatorSnapshot.child("holidays/" + deleteHolidayRequest.getHolidayId()));
-        DateTime currentDate = holidays.getStartAt().minusDays(1); // Decremented because of iterations
-        DateTime lastDate = holidays.getEndAt();
-        DateTime lastGeneratedDate = new DateTime(
+        LocalDate currentDate = new LocalDate(holidays.getStartAt().minusDays(1)); // Decremented because of iterations
+        LocalDate lastDate = new LocalDate(holidays.getEndAt());
+        LocalDate lastGeneratedDate = new LocalDate(
                 generatorSnapshot.child("lastGeneratedDate/year").getValue(Integer.class),
                 generatorSnapshot.child("lastGeneratedDate/month").getValue(Integer.class),
-                generatorSnapshot.child("lastGeneratedDate/date").getValue(Integer.class),
-                23,
-                59
+                generatorSnapshot.child("lastGeneratedDate/date").getValue(Integer.class)
         );
         List<Interval> intervalsToGenerateIn;
         Integer visitLength = generatorSnapshot.child("visitLength").getValue(Integer.class);

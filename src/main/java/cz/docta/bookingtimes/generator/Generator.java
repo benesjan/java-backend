@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
 import java.util.ArrayList;
@@ -80,18 +81,16 @@ public class Generator {
 
         Map<String, Object> updatedOfficeData = new HashMap<>();
 
-        DateTime lastDate = new DateTime().plusDays(numberOfDays);
-        DateTime currentDate;
+        LocalDate lastDate = new LocalDate().plusDays(numberOfDays);
+        LocalDate currentDate;
         if (office.hasChild("lastGeneratedDate")) {
-            currentDate = new DateTime(
+            currentDate = new LocalDate(
                     office.child("lastGeneratedDate/year").getValue(Integer.class),
                     office.child("lastGeneratedDate/month").getValue(Integer.class),
-                    office.child("lastGeneratedDate/date").getValue(Integer.class),
-                    0,
-                    0
+                    office.child("lastGeneratedDate/date").getValue(Integer.class)
             );
         } else {
-            currentDate = new DateTime().withTimeAtStartOfDay(); // If the lastGeneratedDate is not available set to tomorrow
+            currentDate = new LocalDate(); // If the lastGeneratedDate is not available set to tomorrow
         }
 
         List relevantHolidays = getRelevantHolidays(office.child("holidays"), lastDate);
@@ -132,16 +131,14 @@ public class Generator {
      * @param lastDate last date in which booking times will be generated
      * @return List of holidays which intersects with generated dates
      */
-    private static List getRelevantHolidays(DataSnapshot holidays, DateTime lastDate) {
+    private static List getRelevantHolidays(DataSnapshot holidays, LocalDate lastDate) {
         ArrayList<Holidays> toReturn = new ArrayList<>();
 
-        // Comparable timestamp is incremented by one day in order to correctly evaluate the intersection.
-        // If it wasn't incremented there might be a case when lastDate is at 14:00 and start of holidays
-        // is at 15:00 and the holidays would not be added. A.k.a time of lastDate is arbitrary
-        Long millisToCompare = lastDate.plusDays(1).getMillis();
+        DateTime holidaysStart;
 
         for (DataSnapshot _holidays : holidays.getChildren()) {
-            if (Long.parseLong(_holidays.getKey()) < millisToCompare) {
+            holidaysStart = new DateTime(Long.parseLong(_holidays.getKey()));
+            if (holidaysStart.getYear() < lastDate.getYear() || (holidaysStart.getDayOfYear() <= lastDate.getDayOfYear())) {
                 toReturn.add(new Holidays(_holidays));
             }
         }
@@ -159,7 +156,7 @@ public class Generator {
      * @param officeId     Id of the office
      */
 
-    public static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, DateTime date, String officeId) {
+    public static void generateHours(Map objectToSave, Integer visitLength, List<Interval> intervals, LocalDate date, String officeId) {
         Integer dayDate = date.getDayOfMonth();
         Integer month = date.getMonthOfYear();
 
@@ -200,7 +197,7 @@ public class Generator {
      * @param currentDate  date which has to be set to 00:00
      * @return list of modified intervals
      */
-    private static List<Interval> shrinkByHolidays(List<Interval> intervalList, List<Holidays> holidaysList, DateTime currentDate) {
+    private static List<Interval> shrinkByHolidays(List<Interval> intervalList, List<Holidays> holidaysList, LocalDate currentDate) {
         if (intervalList.size() == 0) return intervalList; // Performance improvement
 
         for (Holidays holidays : holidaysList) {
@@ -255,7 +252,7 @@ public class Generator {
      * @param startAtTimestamp  Timestamp of a start of the interval
      * @return Boolean representing the comparison of the timestamp of the last generated date and the startAt timestamp.
      */
-    public static Boolean areHollidaysColliding(DataSnapshot generatorSnapshot, Long startAtTimestamp) {
+    public static Boolean areHolidaysColliding(DataSnapshot generatorSnapshot, Long startAtTimestamp) {
         if (generatorSnapshot.hasChild("lastGeneratedDate")) {
             // Get the timestamp in milliseconds of the end (plus 1 day) of the last generated date
             Long timestamp = new DateTime(

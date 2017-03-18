@@ -91,11 +91,11 @@ public class AddHolidayServlet extends FirebaseServlet {
         synchronizedMap.put("privateFinished", false);
         synchronizedMap.put("publicFinished", false);
 
-        // I have top remove all times that interfere with holiday so I am subtracting 1 visit length in milliseconds
+        // I have to remove all times that interfere with holiday so I am subtracting 1 visit length in milliseconds
         String startId = Generator.timestampToId(addHolidayRequest.getStartAt() - visitLength * 60 * 1000);
         String endId = Generator.timestampToId(addHolidayRequest.getEndAt());
 
-        // Might rekt a patient if he managed to create an appointment just before the appointments are deleted> possible handled automatically by Firebase
+        // Might rekt a patient if he managed to create an appointment just before the appointments are deleted>. Possibly handled automatically by Firebase
         database.getReference("appointmentsPublic/" + officeId).orderByKey().startAt(startId).endAt(endId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -127,29 +127,32 @@ public class AddHolidayServlet extends FirebaseServlet {
                 patientMessage.put("sender", officeId);
 
                 for (DataSnapshot time : dataSnapshot.getChildren()) {
-                    String patientId = time.child("patient").getValue(String.class);
                     objectToSave.put("/appointmentsPrivate/" + officeId + "/" + time.getKey(), null);
-                    objectToSave.put("/userAppointments/" + patientId + "/" + time.getKey(), null);
-                    objectToSave.put("/userNotifications/" + patientId + "/" + database.getReference("/").push().getKey(), patientMessage);
 
-                    database.getReference("/userInterfaceInfo/" + patientId + "/numberOfNotifications").runTransaction(new Transaction.Handler() {
-                        @Override
-                        public Transaction.Result doTransaction(MutableData mutableData) {
-                            Integer currentValue = mutableData.getValue(Integer.class);
-                            if (currentValue == null) {
-                                mutableData.setValue(1);
-                            } else {
-                                mutableData.setValue(currentValue + 1);
+                    if (time.child("source").getValue(String.class).equals("online")) {
+                        String patientId = time.child("patient").getValue(String.class);
+                        objectToSave.put("/userAppointments/" + patientId + "/" + time.getKey(), null);
+                        objectToSave.put("/userNotifications/" + patientId + "/" + database.getReference("/").push().getKey(), patientMessage);
+
+                        database.getReference("/userInterfaceInfo/" + patientId + "/numberOfNotifications").runTransaction(new Transaction.Handler() {
+                            @Override
+                            public Transaction.Result doTransaction(MutableData mutableData) {
+                                Integer currentValue = mutableData.getValue(Integer.class);
+                                if (currentValue == null) {
+                                    mutableData.setValue(1);
+                                } else {
+                                    mutableData.setValue(currentValue + 1);
+                                }
+
+                                return Transaction.success(mutableData);
                             }
 
-                            return Transaction.success(mutableData);
-                        }
-
-                        @Override
-                        public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
-                            System.out.println("Transaction on notifications of " + patientId + " completed");
-                        }
-                    });
+                            @Override
+                            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                                System.out.println("Transaction on notifications of " + patientId + " completed");
+                            }
+                        });
+                    }
                 }
 
                 synchronized (synchronizedMap) {
@@ -174,7 +177,7 @@ public class AddHolidayServlet extends FirebaseServlet {
             if (databaseError != null) {
                 System.err.println("OfficeId: " + officeId + ", Holiday saving failed " + databaseError.getMessage());
             } else {
-                System.out.println("OfficeId: " + officeId + ", Holiday saved successdully.");
+                System.out.println("OfficeId: " + officeId + ", Holiday saved successfully.");
             }
         });
     }

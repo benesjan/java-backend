@@ -5,3 +5,4 @@ gradle
 gradlew
 projectFilesBackup
 .gradle
+/src/main/webapp/WEB-INF/service_key.json

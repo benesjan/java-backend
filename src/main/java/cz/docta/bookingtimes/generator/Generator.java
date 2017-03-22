@@ -18,6 +18,9 @@ import java.util.Map;
  * @author Jan Benes (janbenes1234@gmail.com)
  */
 public class Generator {
+//    private static String projectName = "docta-project";
+    private static String projectName = "doctor-appointment-system";
+
     private static String serviceAppName = "serviceApp";
 
     public static String getServiceAppName() {
@@ -43,10 +46,9 @@ public class Generator {
 
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredential(FirebaseCredentials.applicationDefault())
-                .setDatabaseUrl("https://doctor-appointment-system.firebaseio.com/")
+                .setDatabaseUrl("https://" + projectName + ".firebaseio.com/")
                 .setDatabaseAuthVariableOverride(auth)
                 .build();
-
 
         try {
             FirebaseApp.initializeApp(options, appName);
@@ -55,6 +57,10 @@ public class Generator {
         }
 
         return FirebaseApp.getInstance(appName);
+    }
+
+    public static String getProjectName() {
+        return projectName;
     }
 
     public static String timestampToId(Long timestamp) {

@@ -30,7 +30,7 @@ public abstract class FirebaseServlet extends HttpServlet {
 
                 FirebaseOptions options = new FirebaseOptions.Builder()
                         .setCredential(FirebaseCredentials.fromCertificate(serviceKeyStream))
-                        .setDatabaseUrl("https://doctor-appointment-system.firebaseio.com/")
+                        .setDatabaseUrl("https://" + Generator.getProjectName() + ".firebaseio.com/")
                         .setDatabaseAuthVariableOverride(auth)
                         .build();
 

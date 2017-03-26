@@ -1,82 +1,48 @@
-package cz.docta.bookingtimes;
+package cz.docta.bookingtimes.taskprocessors;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
-import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
 import cz.docta.bookingtimes.generator.Generator;
 import cz.docta.bookingtimes.generator.Holidays;
 import cz.docta.bookingtimes.generator.Interval;
-import cz.docta.bookingtimes.gsonrequests.DeleteHolidayRequest;
+import cz.docta.bookingtimes.taskprocessors.snapshotclasses.HolidayDeletion;
 import org.joda.time.LocalDate;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Jan Benes (janbenes1234@gmail.com)
  */
-public class DeleteHolidayServlet extends FirebaseServlet {
-
-    @Override
-    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.addHeader("Access-Control-Allow-Origin", "*");
-        resp.addHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-        resp.addHeader("Access-Control-Allow-Headers", "Content-Type");
-    }
-
-    @Override
-    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        Gson gson = new Gson();
-
-        String postData = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-        DeleteHolidayRequest deleteHolidayRequest = gson.fromJson(postData, DeleteHolidayRequest.class);
-
-
-        resp.addHeader("Access-Control-Allow-Origin", "*");
-        resp.addHeader("Content-Type", "application/json");
-
-        if (deleteHolidayRequest != null && deleteHolidayRequest.areAttributesValid()) {
-            resp.getWriter().append("{\"success\":true}");
-            this.verifyTokenAndDeleteHoliday(deleteHolidayRequest);
-        } else {
-            System.err.println("Request parsing failed.");
-            resp.getWriter().append("{\"success\":false}");
+public class HolidayDeletionsProcessor {
+    public static void process(DataSnapshot holidayAdditions) {
+        for (DataSnapshot office : holidayAdditions.getChildren()) {
+            String officeId = office.getKey();
+            for (DataSnapshot holidays : office.getChildren()) {
+                deleteHoliday(new HolidayDeletion(holidays, officeId));
+            }
         }
     }
 
-    private void verifyTokenAndDeleteHoliday(DeleteHolidayRequest deleteHolidayRequest) {
-        FirebaseAuth.getInstance(Generator.getServiceApp()).verifyIdToken(deleteHolidayRequest.getIdToken())
-                .addOnSuccessListener(decodedToken -> {
-                    this.deleteHoliday(Generator.getUserDatabase(decodedToken.getUid()), deleteHolidayRequest);
-                }).addOnFailureListener(e -> System.err.println("Token verification failed. deleteHolidayRequest: " + deleteHolidayRequest));
-    }
-
-    private void deleteHoliday(FirebaseDatabase database, DeleteHolidayRequest deleteHolidayRequest) {
-        String officeId = deleteHolidayRequest.getOfficeId();
+    private static void deleteHoliday(HolidayDeletion holidayDeletion) {
+        String officeId = holidayDeletion.getOfficeId();
 
         Map objectToSave = new HashMap();
-        objectToSave.put("/officeHolidays/" + deleteHolidayRequest.getOfficeId() + "/" + deleteHolidayRequest.getHolidayId(), null);
-        objectToSave.put("/officeFullInfo/" + deleteHolidayRequest.getOfficeId() + "/holidays/" + deleteHolidayRequest.getHolidayId(), null);
-        objectToSave.put("/generatorInfo/" + deleteHolidayRequest.getOfficeId() + "/holidays/" + deleteHolidayRequest.getHolidayId(), null);
+        objectToSave.put("/taskQueue/holidayDeletions/" + officeId + "/" + holidayDeletion.getHolidayId(), null);
+        objectToSave.put("/officeHolidays/" + officeId + "/" + holidayDeletion.getHolidayId(), null);
+        objectToSave.put("/officeFullInfo/" + officeId + "/holidays/" + holidayDeletion.getHolidayId(), null);
+        objectToSave.put("/generatorInfo/" + officeId + "/holidays/" + holidayDeletion.getHolidayId(), null);
 
-        database.getReference("generatorInfo/" + officeId).addListenerForSingleValueEvent(new ValueEventListener() {
+        Generator.getDatabase().getReference("generatorInfo/" + officeId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists() && Generator.areHolidaysColliding(dataSnapshot, Long.parseLong(deleteHolidayRequest.getHolidayId()))) {
-                    generateTimesAndSave(database, deleteHolidayRequest, dataSnapshot, objectToSave);
+                if (dataSnapshot.exists() && Generator.areHolidaysColliding(dataSnapshot, Long.parseLong(holidayDeletion.getHolidayId()))) {
+                    generateTimesAndSave(holidayDeletion, dataSnapshot, objectToSave);
                 } else {
-                    saveObject(database, objectToSave, officeId);
+                    saveObject(objectToSave, officeId);
                 }
             }
 
@@ -87,8 +53,8 @@ public class DeleteHolidayServlet extends FirebaseServlet {
         });
     }
 
-    private void generateTimesAndSave(FirebaseDatabase database, DeleteHolidayRequest deleteHolidayRequest, DataSnapshot generatorSnapshot, Map objectToSave) {
-        Holidays holidays = new Holidays(generatorSnapshot.child("holidays/" + deleteHolidayRequest.getHolidayId()));
+    private static void generateTimesAndSave(HolidayDeletion holidayDeletion, DataSnapshot generatorSnapshot, Map objectToSave) {
+        Holidays holidays = new Holidays(generatorSnapshot.child("holidays/" + holidayDeletion.getHolidayId()));
         LocalDate currentDate = new LocalDate(holidays.getStartAt().minusDays(1)); // Decremented because of iterations
         LocalDate lastDate = new LocalDate(holidays.getEndAt());
         LocalDate lastGeneratedDate = new LocalDate(
@@ -98,7 +64,7 @@ public class DeleteHolidayServlet extends FirebaseServlet {
         );
         List<Interval> intervalsToGenerateIn;
         Integer visitLength = generatorSnapshot.child("visitLength").getValue(Integer.class);
-        String officeId = deleteHolidayRequest.getOfficeId();
+        String officeId = holidayDeletion.getOfficeId();
 
         if (lastGeneratedDate.compareTo(lastDate) < 0) {
             lastDate = lastGeneratedDate;
@@ -141,11 +107,11 @@ public class DeleteHolidayServlet extends FirebaseServlet {
             }
         }
 
-        saveObject(database, objectToSave, deleteHolidayRequest.getOfficeId());
+        saveObject(objectToSave, holidayDeletion.getOfficeId());
     }
 
-    private synchronized void saveObject(FirebaseDatabase database, Map<String, Object> objectToSave, String officeId) {
-        database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
+    private static synchronized void saveObject(Map<String, Object> objectToSave, String officeId) {
+        Generator.getDatabase().getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
             if (databaseError != null) {
                 System.err.println("OfficeId: " + officeId + ", Holiday deleting failed " + databaseError.getMessage());
             } else {

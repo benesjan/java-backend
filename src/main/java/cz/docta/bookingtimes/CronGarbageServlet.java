@@ -1,10 +1,10 @@
 package cz.docta.bookingtimes;
 
 import com.google.firebase.database.*;
-import cz.docta.bookingtimes.abstractpackage.FirebaseServlet;
 import cz.docta.bookingtimes.generator.Generator;
 import org.joda.time.DateTime;
 
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -14,11 +14,11 @@ import java.util.Map;
 /**
  * @author Jan Benes (janbenes1234@gmail.com)
  */
-public class CronGarbageServlet extends FirebaseServlet {
+public class CronGarbageServlet extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        FirebaseDatabase database = Generator.getServiceDatabase();
+        FirebaseDatabase database = Generator.getDatabase();
         Long deletionTimestamp = new DateTime().minusDays(1).getMillis(); // Getting the value of yesterday to avoid messing with time zones
         String timestampId = Generator.timestampToId(deletionTimestamp);
 

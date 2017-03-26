@@ -16,16 +16,8 @@
         <servlet-class>cz.docta.bookingtimes.RegistrationServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>holidaydeletion</servlet-name>
-        <servlet-class>cz.docta.bookingtimes.DeleteHolidayServlet</servlet-class>
-    </servlet>
-    <servlet>
         <servlet-name>taskprocessor</servlet-name>
         <servlet-class>cz.docta.bookingtimes.TaskProcessorServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>infochanged</servlet-name>
-        <servlet-class>cz.docta.bookingtimes.InfoChangedServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>crontimes</servlet-name>
@@ -40,15 +32,7 @@
         <url-pattern>/registration/generate</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>holidaydeletion</servlet-name>
-        <url-pattern>/holiday/delete</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
         <servlet-name>taskprocessor</servlet-name>
         <url-pattern>/tasks/process</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>infochanged</servlet-name>
-        <url-pattern>/info/changed</url-pattern>
     </servlet-mapping>
 </web-app>

@@ -6,6 +6,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import cz.docta.bookingtimes.generator.Generator;
 import cz.docta.bookingtimes.taskprocessors.HolidayAdditionsProcessor;
+import cz.docta.bookingtimes.taskprocessors.HolidayDeletionsProcessor;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -38,11 +39,26 @@ public class TaskProcessorServlet extends HttpServlet {
         resp.addHeader("Content-Type", "application/json");
         resp.getWriter().append("{\"success\":true}");
 
+        // TODO: fetch all tasks at once (activate when indexing is ready)
         database.getReference("taskQueue/holidayAdditions/").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     HolidayAdditionsProcessor.process(dataSnapshot);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("holidayDeletions request (TaskProcessorServlet), The read failed: " + databaseError.getCode());
+            }
+        });
+
+        database.getReference("taskQueue/holidayDeletions/").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    HolidayDeletionsProcessor.process(dataSnapshot);
                 }
             }
 

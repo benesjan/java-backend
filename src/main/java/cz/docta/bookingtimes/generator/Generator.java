@@ -49,34 +49,6 @@ public class Generator {
         return FirebaseDatabase.getInstance(getServiceApp());
     }
 
-    public static FirebaseDatabase getServiceDatabase() {
-        return FirebaseDatabase.getInstance(getServiceApp());
-    }
-
-    public static FirebaseDatabase getUserDatabase(String uid) {
-        return FirebaseDatabase.getInstance(getAppAsUser(uid));
-    }
-
-    private static FirebaseApp getAppAsUser(String uid) {
-        Map<String, Object> auth = new HashMap<>();
-        String appName = "userApp" + uid;
-        auth.put("uid", uid);
-
-        FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredential(FirebaseCredentials.applicationDefault())
-                .setDatabaseUrl("https://" + projectName + ".firebaseio.com/")
-                .setDatabaseAuthVariableOverride(auth)
-                .build();
-
-        try {
-            FirebaseApp.initializeApp(options, appName);
-        } catch (IllegalStateException ex) {
-            // TODO: Find a way to verify if app exists without throwing the exception or delete the app after the usage.
-        }
-
-        return FirebaseApp.getInstance(appName);
-    }
-
     public static String getProjectName() {
         return projectName;
     }

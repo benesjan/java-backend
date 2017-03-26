@@ -31,6 +31,24 @@ public class Generator {
         return FirebaseApp.getInstance(serviceAppName);
     }
 
+    public static FirebaseDatabase getDatabase() {
+
+        if (FirebaseApp.getApps().size() == 0) {
+            Map<String, Object> auth = new HashMap<>();
+            auth.put("uid", "my-service-worker");
+
+            FirebaseOptions options = new FirebaseOptions.Builder()
+                    .setCredential(FirebaseCredentials.applicationDefault())
+                    .setDatabaseUrl("https://" + Generator.getProjectName() + ".firebaseio.com/")
+                    .setDatabaseAuthVariableOverride(auth)
+                    .build();
+
+            FirebaseApp.initializeApp(options, Generator.getServiceAppName());
+        }
+
+        return FirebaseDatabase.getInstance(getServiceApp());
+    }
+
     public static FirebaseDatabase getServiceDatabase() {
         return FirebaseDatabase.getInstance(getServiceApp());
     }

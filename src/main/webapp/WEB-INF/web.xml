@@ -20,8 +20,8 @@
         <servlet-class>cz.docta.bookingtimes.DeleteHolidayServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>holidayaddition</servlet-name>
-        <servlet-class>cz.docta.bookingtimes.AddHolidayServlet</servlet-class>
+        <servlet-name>taskprocessor</servlet-name>
+        <servlet-class>cz.docta.bookingtimes.TaskProcessorServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>infochanged</servlet-name>
@@ -44,8 +44,8 @@
         <url-pattern>/holiday/delete</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>holidayaddition</servlet-name>
-        <url-pattern>/holiday/add</url-pattern>
+        <servlet-name>taskprocessor</servlet-name>
+        <url-pattern>/tasks/process</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>infochanged</servlet-name>

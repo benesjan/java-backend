@@ -80,6 +80,7 @@ public class CronGarbageServlet extends HttpServlet {
                 for (DataSnapshot time : dataSnapshot.getChildren()) {
                     objectToSave.put("/appointmentsPrivate/" + officeId + "/" + time.getKey(), null);
                     objectToSave.put("/userAppointments/" + time.child("patient").getValue(String.class) + "/" + time.getKey(), null);
+                    objectToSave.put("/userContactedOffices/" + time.child("patient").getValue(String.class) + "/" + officeId, false);
                 }
                 saveObject(database, objectToSave, officeId);
             }

@@ -77,10 +77,14 @@ public class CronGarbageServlet extends HttpServlet {
         database.getReference("appointmentsPrivate/" + officeId).orderByKey().endAt(timestampId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                String patientId;
                 for (DataSnapshot time : dataSnapshot.getChildren()) {
+                    patientId = time.child("patient").getValue(String.class);
                     objectToSave.put("/appointmentsPrivate/" + officeId + "/" + time.getKey(), null);
-                    objectToSave.put("/userAppointments/" + time.child("patient").getValue(String.class) + "/" + time.getKey(), null);
-                    objectToSave.put("/userContactedOffices/" + time.child("patient").getValue(String.class) + "/" + officeId, false);
+                    if (patientId != null) {
+                        objectToSave.put("/userAppointments/" + patientId + "/" + time.getKey(), null);
+                        objectToSave.put("/userContactedOffices/" + patientId + "/" + officeId + "/booked", false);
+                    }
                 }
                 saveObject(database, objectToSave, officeId);
             }

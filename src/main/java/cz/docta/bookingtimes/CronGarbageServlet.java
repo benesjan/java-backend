@@ -96,6 +96,12 @@ public class CronGarbageServlet extends HttpServlet {
         });
     }
 
+    /**
+     * This function saves the created object to Firebase using the multilocation update.
+     * @param database FirebaseDatabase object created using the service-worker privileges
+     * @param objectToSave Map of updated paths
+     * @param officeId Used only for logging
+     */
     private void saveObject(FirebaseDatabase database, Map<String, Object> objectToSave, String officeId) {
         database.getReference("/").updateChildren(objectToSave, (databaseError, databaseReference) -> {
             if (databaseError != null) {

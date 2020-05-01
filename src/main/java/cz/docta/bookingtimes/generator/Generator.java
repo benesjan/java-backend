@@ -258,7 +258,7 @@ public class Generator {
                     0
             ).plusDays(1).getMillis();
 
-            return startAtTimestamp < timestamp;
+            if (startAtTimestamp < timestamp) return true;
         }
 
         return false;

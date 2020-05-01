@@ -1,14 +1,15 @@
 package cz.docta.bookingtimes.generator;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,32 +21,28 @@ import java.util.Map;
 public class Generator {
     private static String projectName = "docta-project";
 
-    private static String serviceAppName = "serviceApp";
-
-    public static String getServiceAppName() {
-        return serviceAppName;
-    }
-
-    public static FirebaseApp getServiceApp() {
-        return FirebaseApp.getInstance(serviceAppName);
-    }
-
     public static FirebaseDatabase getDatabase() {
 
+        Map<String, Object> auth = new HashMap<>();
+        auth.put("uid", "my-service-worker");
+
         if (FirebaseApp.getApps().size() == 0) {
-            Map<String, Object> auth = new HashMap<>();
-            auth.put("uid", "my-service-worker");
+            try {
+                FileInputStream serviceAccount =
+                        new FileInputStream("keys/adminsdk.json");
 
-            FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredential(FirebaseCredentials.applicationDefault())
-                    .setDatabaseUrl("https://" + Generator.getProjectName() + ".firebaseio.com/")
-                    .setDatabaseAuthVariableOverride(auth)
-                    .build();
+                FirebaseOptions options = new FirebaseOptions.Builder()
+                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                        .setDatabaseUrl("https://" + Generator.getProjectName() + ".firebaseio.com/")
+                        .setDatabaseAuthVariableOverride(auth)
+                        .build();
 
-            FirebaseApp.initializeApp(options, Generator.getServiceAppName());
+                FirebaseApp.initializeApp(options);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
-        return FirebaseDatabase.getInstance(getServiceApp());
+        return FirebaseDatabase.getInstance(FirebaseApp.getApps().get(0));
     }
 
     public static String getProjectName() {
@@ -258,7 +255,7 @@ public class Generator {
                     0
             ).plusDays(1).getMillis();
 
-            if (startAtTimestamp < timestamp) return true;
+            return startAtTimestamp < timestamp;
         }
 
         return false;

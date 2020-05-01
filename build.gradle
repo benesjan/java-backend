@@ -25,7 +25,7 @@ apply plugin: 'com.google.cloud.tools.appengine'  // App Engine tasks
 dependencies {
     providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
     providedCompile 'com.google.appengine:appengine:+'
-    compile 'com.google.firebase:firebase-admin:4.1.1'
+    compile 'com.google.firebase:firebase-admin:6.12.2'
     compile 'joda-time:joda-time:2.9.7'
 }
 

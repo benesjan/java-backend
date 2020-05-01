@@ -18,8 +18,7 @@ import java.util.Map;
  * @author Jan Benes (janbenes1234@gmail.com)
  */
 public class Generator {
-//    private static String projectName = "docta-project";
-    private static String projectName = "doctor-appointment-system";
+    private static String projectName = "docta-project";
 
     private static String serviceAppName = "serviceApp";
 
@@ -259,7 +258,7 @@ public class Generator {
                     0
             ).plusDays(1).getMillis();
 
-            if (startAtTimestamp < timestamp) return true;
+            return startAtTimestamp < timestamp;
         }
 
         return false;
